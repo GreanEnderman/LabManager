@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Chemical Inventory | Clinical Precision Workbench</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#ffdcbc",
+                    "secondary-container": "#7cf8d9",
+                    "inverse-surface": "#2e3132",
+                    "on-tertiary-fixed": "#2c1700",
+                    "tertiary-container": "#532f00",
+                    "on-surface-variant": "#41484b",
+                    "on-error": "#ffffff",
+                    "tertiary": "#351c00",
+                    "primary-fixed-dim": "#9ecee1",
+                    "primary-container": "#003d4d",
+                    "primary": "#002631",
+                    "surface-container-high": "#e7e8e9",
+                    "outline-variant": "#c0c8cc",
+                    "on-primary-fixed": "#001f28",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-secondary-container": "#00725e",
+                    "error": "#ba1a1a",
+                    "primary-fixed": "#baeafe",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed-variant": "#194d5d",
+                    "on-secondary-fixed-variant": "#005142",
+                    "inverse-on-surface": "#f0f1f2",
+                    "surface-bright": "#f8f9fa",
+                    "background": "#f8f9fa",
+                    "surface-container": "#edeeef",
+                    "on-primary": "#ffffff",
+                    "inverse-primary": "#9ecee1",
+                    "on-surface": "#191c1d",
+                    "on-primary-container": "#79a8ba",
+                    "outline": "#71787c",
+                    "surface-dim": "#d9dadb",
+                    "surface-variant": "#e1e3e4",
+                    "surface-container-low": "#f3f4f5",
+                    "secondary": "#006b59",
+                    "on-tertiary-fixed-variant": "#683d00",
+                    "surface-tint": "#356476",
+                    "secondary-fixed": "#7cf8d9",
+                    "on-error-container": "#93000a",
+                    "on-background": "#191c1d",
+                    "on-secondary": "#ffffff",
+                    "secondary-fixed-dim": "#5ddbbd",
+                    "surface": "#f8f9fa",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-container": "#e68c00",
+                    "on-secondary-fixed": "#002019",
+                    "tertiary-fixed-dim": "#ffb86b"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; color: #191c1d; }
+        .font-headline { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-full border-r border-slate-200 dark:border-slate-800 p-4 bg-slate-100 dark:bg-slate-950 w-64 shrink-0">
+<div class="flex items-center gap-3 px-2 mb-8">
+<div class="w-10 h-10 bg-primary-container rounded flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" data-icon="biotech">biotech</span>
+</div>
+<div>
+<h1 class="text-lg font-black text-[#003d4d] dark:text-[#f8f9fa] leading-none">Material Ops</h1>
+<p class="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-1">Clinical Precision</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-medium font-body text-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-white dark:bg-slate-800 text-[#003d4d] dark:text-white font-bold rounded-lg shadow-sm" href="#">
+<span class="material-symbols-outlined" data-icon="biotech">biotech</span>
+<span class="font-body text-sm">Chemical Inventory</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="swap_horiz">swap_horiz</span>
+<span class="font-medium font-body text-sm">Inbound/Outbound</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="precision_manufacturing">precision_manufacturing</span>
+<span class="font-medium font-body text-sm">Equipment Management</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="build">build</span>
+<span class="font-medium font-body text-sm">Maintenance</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="notifications_active">notifications_active</span>
+<span class="font-medium font-body text-sm">Alert Center</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-medium font-body text-sm">Settings</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-slate-200 dark:border-slate-800">
+<button class="w-full py-2.5 bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold rounded-md shadow-lg flex items-center justify-center gap-2 text-sm hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                Run New Test
+            </button>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col min-w-0 bg-surface overflow-hidden">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center w-full px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 z-10">
+<div class="flex items-center gap-6">
+<h2 class="text-xl font-bold text-[#003d4d] dark:text-[#f8f9fa] tracking-tight font-headline">Inventory Console</h2>
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" data-icon="search">search</span>
+<input class="bg-surface-container-low border-none rounded-md pl-10 pr-4 py-1.5 text-xs w-64 focus:ring-1 focus:ring-primary" placeholder="Global asset search..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-slate-200">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="professional headshot of a lab technician in clean white environment with focused expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDAb4OFdG4ssB7vyme-Hu2_D2y-1B_Mg2oE_IJVHqIBgLs_8-JUDYRtfW57bz7SwZAeLlQSs8j1tGkoBxFr8E9NipPt0lCD9lyM3pLpzx3s1BZ2_3r9uIyo5bK1o8Aqujqy-V2G3ANMKdeqObqjQeAHaCZ8jBqqt3ABRRqfcSbhLcv0FlEXBERyEvNeOpqquK30-g__M0a6iEwwqRDtfywE1-qXTxzHlcwjKQ-8BWCjuuFTL5tasnO6WEokZeQRqrkDlGEmhgVlgh8H"/>
+</div>
+</div>
+</header>
+<section class="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth">
+<!-- Toolbar -->
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-sm space-y-4">
+<div class="flex flex-wrap items-center justify-between gap-4">
+<div class="flex flex-wrap items-center gap-3">
+<div class="relative">
+<select class="bg-surface-container-low border-none rounded-md pl-3 pr-8 py-2 text-xs font-medium text-on-surface-variant focus:ring-1 focus:ring-primary appearance-none cursor-pointer">
+<option>All Categories</option>
+<option>Reagents</option>
+<option>Solvents</option>
+<option>Acids/Bases</option>
+<option>Catalysts</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-xs pointer-events-none" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+</div>
+<div class="relative">
+<select class="bg-surface-container-low border-none rounded-md pl-3 pr-8 py-2 text-xs font-medium text-on-surface-variant focus:ring-1 focus:ring-primary appearance-none cursor-pointer">
+<option>Stock Status</option>
+<option>充足 (Optimal)</option>
+<option>低库存 (Warning)</option>
+<option>缺货 (Critical)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-xs pointer-events-none" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+</div>
+<div class="h-6 w-px bg-slate-200 mx-1"></div>
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Quick Filter:</span>
+<div class="flex gap-1">
+<button class="px-3 py-1 bg-secondary-container/20 text-on-secondary-container text-[10px] font-bold rounded-full border border-secondary-container/30">Flammable</button>
+<button class="px-3 py-1 bg-surface-container-high text-on-surface-variant text-[10px] font-bold rounded-full">Reactive</button>
+</div>
+</div>
+<button class="flex items-center gap-2 bg-primary-container text-on-primary px-4 py-2 rounded-md text-xs font-bold shadow-md hover:brightness-110 transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="add_circle">add_circle</span>
+                        Add Chemical Asset
+                    </button>
+</div>
+</div>
+<!-- Inventory Table -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-slate-100">
+<th class="px-6 py-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Visual</th>
+<th class="px-6 py-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Chemical Identity</th>
+<th class="px-6 py-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Classification</th>
+<th class="px-6 py-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Specification</th>
+<th class="px-6 py-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Units</th>
+<th class="px-6 py-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Stock Levels</th>
+<th class="px-6 py-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Status</th>
+<th class="px-6 py-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Sync Log</th>
+<th class="px-6 py-4"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50">
+<!-- Row 1 -->
+<tr class="hover:bg-slate-50/50 transition-colors group">
+<td class="px-6 py-4">
+<div class="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden">
+<img alt="Chemical Visual" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" data-alt="close-up macro photography of blue crystalline chemical substance in a clear glass petri dish" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLQfZphO1DIqAWLRcD5QxM_1BpAptN0KoNOnMLtCW3j-kx7W7-syYaumWAmm4wwab7qxIK2uWht3P1LWOL1ThH-i2uGb4nHZG-yPNxCn8p9lZdT1hY2P38v_ffblQs6Me8nMc5JidhVbhmbXd2ChcJ0h97JIucejhYwLpVdP2yBTt0IoxapqqL_bQtLRVXWZdHXwdGcQI6v7iw7GNSP4Cekd87GSwQvBgfH6t2dTDF5LS70hORKfvEXt8pqLLnJE-q2wur9k9sl3GZ"/>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-[#003d4d] font-headline">Hydrochloric Acid</span>
+<span class="text-[10px] text-slate-400 font-mono">CAS: 7647-01-0</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded">Inorganic Acids</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-xs font-mono text-slate-500">37% AR Grade</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-xs font-medium text-slate-600">500mL Bottle</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col gap-1 w-32">
+<div class="flex justify-between text-[10px] font-bold">
+<span class="text-primary">42 Units</span>
+<span class="text-slate-400">Min: 15</span>
+</div>
+<div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[75%]"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-secondary-container text-on-secondary-container">
+                                        充足
+                                    </span>
+</td>
+<td class="px-6 py-4">
+<span class="text-[11px] text-slate-400 whitespace-nowrap">2023-11-24 14:20</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1 hover:bg-slate-100 rounded transition-colors text-slate-400">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-slate-50/50 transition-colors group">
+<td class="px-6 py-4">
+<div class="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden">
+<img alt="Chemical Visual" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" data-alt="laboratory glass beaker with golden viscous liquid being measured against a bright clean background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5-CWSI0GP7iO2EKzZeckiL3O2GdVQceWrvEBzlJn8gyASK1zjCS8CGEkr1beL9nwl5eIcx9PHKqg9MXK-KDgO_uAoO_AJ3556Ptg7guMU2D5Jp9uZ3kCM-ky9MSv1RsPl142mpfgNGnB6wMhGniCnebpzwlGUEm13vfStvx-yDTCIRD4nDiK-QCBd64YraEq97BfPioWCauYqI_G9PqbhVt5tUozH-s8b6hLqjgFf4ffgNA-VRKTWzX09nzSH4dhu0CJeTQd3wfyQ"/>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-[#003d4d] font-headline">Sodium Hydroxide</span>
+<span class="text-[10px] text-slate-400 font-mono">CAS: 1310-73-2</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded">Strong Bases</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-xs font-mono text-slate-500">Pellets, 99% Pure</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-xs font-medium text-slate-600">1kg Canister</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col gap-1 w-32">
+<div class="flex justify-between text-[10px] font-bold">
+<span class="text-on-tertiary-fixed-variant">8 Units</span>
+<span class="text-slate-400">Min: 10</span>
+</div>
+<div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-tertiary-fixed-dim w-[40%]"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-tertiary-fixed text-on-tertiary-fixed-variant">
+                                        低库存
+                                    </span>
+</td>
+<td class="px-6 py-4">
+<span class="text-[11px] text-slate-400 whitespace-nowrap">2023-11-25 09:12</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1 hover:bg-slate-100 rounded transition-colors text-slate-400">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-slate-50/50 transition-colors group">
+<td class="px-6 py-4">
+<div class="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden">
+<img alt="Chemical Visual" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" data-alt="microscopic view of white crystalline structures with sharp edges on a dark scientific background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9iNbat0cTfGicBYzjvTfeQ2mtC7nz-sxrQHlzDJAJTSO0jKJeccQtdIDHWm4k5BmEiqfgqhE6uPmRjKlyQqbm6lolOkyg9nJsTtMBj6fuGVVh_GClRYufIM9YPfIzhrcLAVpRUBcM8NgLhwRu8hWmd3d1HuzGUYyLm4CCrr5UZMRsO1ZAwFFvLhW_iFs5U69O_USDPGb0HJ8uH1f8ILr50tHd6QiRYnvPkZyAYus4X77nNT0dMMd-99jBJVop7-VnmoxHx9ZXbzGo"/>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-[#003d4d] font-headline">Acetonitrile</span>
+<span class="text-[10px] text-slate-400 font-mono">CAS: 75-05-8</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded">HPLC Solvents</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-xs font-mono text-slate-500">Gradient Grade</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-xs font-medium text-slate-600">4L Winchester</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col gap-1 w-32">
+<div class="flex justify-between text-[10px] font-bold">
+<span class="text-error">1 Unit</span>
+<span class="text-slate-400">Min: 5</span>
+</div>
+<div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-error w-[10%]"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-error-container text-on-error-container">
+                                        缺货
+                                    </span>
+</td>
+<td class="px-6 py-4">
+<span class="text-[11px] text-slate-400 whitespace-nowrap">2023-11-25 11:45</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1 hover:bg-slate-100 rounded transition-colors text-slate-400">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-slate-50/50 transition-colors group">
+<td class="px-6 py-4">
+<div class="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden">
+<img alt="Chemical Visual" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" data-alt="industrial clear glass bottle with hazardous material warning label containing clear liquid on stainless steel lab surface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhRoF9MpInnO_W_6AHl9eTn6OKJSQMwXMD7Fp-r-UvNAfM94PEi100AdzIxyP6NEk4ZEbC3Y_NH83g1sVP9dFYPwyNzYnVE7jjS89rAgYZLzg0YdP8U_eG6WrCtVk6Nq0PLgEenNIg43IN55vSV0uRK16AK-VYazyFrE0W_j2dFlJ7pmr6_veVXtvCpJ5K9alfYYwp2OHkxp3GrM2FtNH3ASJCCWLJ2oWCCxzxkFQ4t97JNAjM6wZ-xyzY4ptQTvbvnoijDB_ITqBY"/>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-[#003d4d] font-headline">Methanol</span>
+<span class="text-[10px] text-slate-400 font-mono">CAS: 67-56-1</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded">Organic Solvents</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-xs font-mono text-slate-500">Spectroscopy Grade</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-xs font-medium text-slate-600">2.5L Bottle</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col gap-1 w-32">
+<div class="flex justify-between text-[10px] font-bold">
+<span class="text-primary">112 Units</span>
+<span class="text-slate-400">Min: 20</span>
+</div>
+<div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[90%]"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-secondary-container text-on-secondary-container">
+                                        充足
+                                    </span>
+</td>
+<td class="px-6 py-4">
+<span class="text-[11px] text-slate-400 whitespace-nowrap">2023-11-25 08:30</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1 hover:bg-slate-100 rounded transition-colors text-slate-400">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination / Footer Stats -->
+<div class="p-4 bg-surface-container-low flex flex-wrap items-center justify-between border-t border-slate-100 gap-4">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Optimal: 1,240 Assets</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary-fixed-dim"></span>
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Low Stock: 14 Assets</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Critical: 3 Assets</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1 text-xs font-medium text-slate-400 hover:text-primary transition-colors">Previous</button>
+<div class="flex gap-1">
+<button class="w-6 h-6 flex items-center justify-center rounded text-xs font-bold bg-primary-container text-on-primary">1</button>
+<button class="w-6 h-6 flex items-center justify-center rounded text-xs font-bold text-slate-500 hover:bg-slate-200">2</button>
+<button class="w-6 h-6 flex items-center justify-center rounded text-xs font-bold text-slate-500 hover:bg-slate-200">3</button>
+</div>
+<button class="px-3 py-1 text-xs font-medium text-slate-400 hover:text-primary transition-colors">Next</button>
+</div>
+</div>
+</div>
+<!-- Dashboard Style Asymmetric Cards -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Usage Analytics -->
+<div class="lg:col-span-2 bg-white rounded-xl shadow-sm p-5 border-l-4 border-primary-container">
+<div class="flex justify-between items-center mb-6">
+<div>
+<h3 class="text-sm font-bold text-primary font-headline">Resource Consumption Trend</h3>
+<p class="text-[11px] text-slate-400">Monthly aggregate for HPLC lab cluster</p>
+</div>
+<span class="material-symbols-outlined text-slate-300" data-icon="show_chart">show_chart</span>
+</div>
+<div class="h-32 flex items-end justify-between gap-1">
+<div class="w-full bg-slate-100 rounded-t-sm h-[40%] hover:bg-primary-container/20 transition-colors"></div>
+<div class="w-full bg-slate-100 rounded-t-sm h-[60%] hover:bg-primary-container/20 transition-colors"></div>
+<div class="w-full bg-slate-100 rounded-t-sm h-[35%] hover:bg-primary-container/20 transition-colors"></div>
+<div class="w-full bg-slate-100 rounded-t-sm h-[80%] hover:bg-primary-container/20 transition-colors"></div>
+<div class="w-full bg-primary-container rounded-t-sm h-[95%]"></div>
+<div class="w-full bg-slate-100 rounded-t-sm h-[45%] hover:bg-primary-container/20 transition-colors"></div>
+<div class="w-full bg-slate-100 rounded-t-sm h-[70%] hover:bg-primary-container/20 transition-colors"></div>
+<div class="w-full bg-slate-100 rounded-t-sm h-[30%] hover:bg-primary-container/20 transition-colors"></div>
+<div class="w-full bg-slate-100 rounded-t-sm h-[50%] hover:bg-primary-container/20 transition-colors"></div>
+<div class="w-full bg-slate-100 rounded-t-sm h-[65%] hover:bg-primary-container/20 transition-colors"></div>
+</div>
+<div class="flex justify-between mt-2 text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+<span>Nov 15</span>
+<span>Nov 20</span>
+<span>Today</span>
+</div>
+</div>
+<!-- Recent Activity Sidebar-like Card -->
+<div class="bg-slate-900 rounded-xl shadow-sm p-5 text-white">
+<h3 class="text-xs font-bold uppercase tracking-[0.2em] mb-4 text-slate-400">Critical Warnings</h3>
+<div class="space-y-4">
+<div class="flex gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-error mt-1.5 shrink-0"></div>
+<div>
+<p class="text-xs font-bold text-white">Acetonitrile Stock Out</p>
+<p class="text-[10px] text-slate-400 mt-0.5">High priority reorder triggered by System Admin</p>
+<p class="text-[9px] text-slate-500 mt-1 uppercase">12 minutes ago</p>
+</div>
+</div>
+<div class="flex gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-tertiary-fixed-dim mt-1.5 shrink-0"></div>
+<div>
+<p class="text-xs font-bold text-white">Sodium Hydroxide Batch Expiring</p>
+<p class="text-[10px] text-slate-400 mt-0.5">Lot #223-B expires in 72 hours</p>
+<p class="text-[9px] text-slate-500 mt-1 uppercase">2 hours ago</p>
+</div>
+</div>
+<button class="w-full py-2 bg-slate-800 rounded-lg text-[10px] font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest mt-2">
+                            View All Notifications
+                        </button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Mobile Navigation (Suppressed based on logic but included as hidden template) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-50 border-t border-slate-200 flex justify-around py-3 z-50">
+<a class="flex flex-col items-center gap-1 text-[#003d4d]" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[10px] font-bold">Dash</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[#003d4d] border-t-2 border-[#006b59] pt-1" href="#">
+<span class="material-symbols-outlined" data-icon="biotech">biotech</span>
+<span class="text-[10px] font-bold">Inventory</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined" data-icon="swap_horiz">swap_horiz</span>
+<span class="text-[10px] font-bold">Moves</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-[10px] font-bold">Setup</span>
+</a>
+</nav>
+</body></html>

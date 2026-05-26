@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Alert Center - Clinical Precision Workbench</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#ffdcbc",
+                    "secondary-container": "#7cf8d9",
+                    "inverse-surface": "#2e3132",
+                    "on-tertiary-fixed": "#2c1700",
+                    "tertiary-container": "#532f00",
+                    "on-surface-variant": "#41484b",
+                    "on-error": "#ffffff",
+                    "tertiary": "#351c00",
+                    "primary-fixed-dim": "#9ecee1",
+                    "primary-container": "#003d4d",
+                    "primary": "#002631",
+                    "surface-container-high": "#e7e8e9",
+                    "outline-variant": "#c0c8cc",
+                    "on-primary-fixed": "#001f28",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-secondary-container": "#00725e",
+                    "error": "#ba1a1a",
+                    "primary-fixed": "#baeafe",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed-variant": "#194d5d",
+                    "on-secondary-fixed-variant": "#005142",
+                    "inverse-on-surface": "#f0f1f2",
+                    "surface-bright": "#f8f9fa",
+                    "background": "#f8f9fa",
+                    "surface-container": "#edeeef",
+                    "on-primary": "#ffffff",
+                    "inverse-primary": "#9ecee1",
+                    "on-surface": "#191c1d",
+                    "on-primary-container": "#79a8ba",
+                    "outline": "#71787c",
+                    "surface-dim": "#d9dadb",
+                    "surface-variant": "#e1e3e4",
+                    "surface-container-low": "#f3f4f5",
+                    "secondary": "#006b59",
+                    "on-tertiary-fixed-variant": "#683d00",
+                    "surface-tint": "#356476",
+                    "secondary-fixed": "#7cf8d9",
+                    "on-error-container": "#93000a",
+                    "on-background": "#191c1d",
+                    "on-secondary": "#ffffff",
+                    "secondary-fixed-dim": "#5ddbbd",
+                    "surface": "#f8f9fa",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-container": "#e68c00",
+                    "on-secondary-fixed": "#002019",
+                    "tertiary-fixed-dim": "#ffb86b"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, h4 { font-family: 'Manrope', sans-serif; }
+        .glass-header {
+            background: rgba(248, 249, 250, 0.6);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface flex h-screen overflow-hidden">
+<!-- SideNavBar (Authority: JSON) -->
+<aside class="bg-slate-100 dark:bg-slate-950 flex flex-col h-full border-r border-slate-200 dark:border-slate-800 p-4 docked left-0 w-64 shrink-0 overflow-y-auto">
+<div class="flex items-center gap-3 px-2 mb-8">
+<div class="w-10 h-10 bg-primary-container rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-white" data-icon="biotech">biotech</span>
+</div>
+<div>
+<div class="text-lg font-black text-[#003d4d] dark:text-[#f8f9fa] leading-tight">Material Ops</div>
+<div class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Clinical Precision</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-[#003d4d] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-[#003d4d] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="biotech">biotech</span>
+<span class="font-medium">Chemical Inventory</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-[#003d4d] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="swap_horiz">swap_horiz</span>
+<span class="font-medium">Inbound/Outbound</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-[#003d4d] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="precision_manufacturing">precision_manufacturing</span>
+<span class="font-medium">Equipment Management</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-[#003d4d] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="build">build</span>
+<span class="font-medium">Maintenance</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-white dark:bg-slate-800 text-[#003d4d] dark:text-white font-bold rounded-lg shadow-sm" href="#">
+<span class="material-symbols-outlined" data-icon="notifications_active" style="font-variation-settings: 'FILL' 1;">notifications_active</span>
+<span class="font-medium">Alert Center</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-[#003d4d] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-medium">Settings</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-slate-200 dark:border-slate-800">
+<button class="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-primary-container to-[#005a70] text-white rounded-lg font-bold shadow-lg hover:scale-[1.02] transition-transform">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                Run New Test
+            </button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-w-0 bg-surface">
+<!-- TopNavBar (Authority: JSON) -->
+<header class="bg-slate-50 dark:bg-slate-900 flex justify-between items-center w-full px-6 py-3 border-b border-slate-200 dark:border-slate-800 docked full-width top-0 sticky z-50">
+<div class="flex items-center gap-6">
+<div class="text-xl font-bold text-[#003d4d] dark:text-[#f8f9fa] tracking-tight">Alert Center</div>
+<div class="hidden md:flex items-center bg-white dark:bg-slate-800 rounded-full px-4 py-1.5 border border-slate-200 dark:border-slate-700 shadow-sm w-96">
+<span class="material-symbols-outlined text-slate-400 text-lg mr-2" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm text-on-surface-variant w-full placeholder-slate-400" placeholder="Search operational alerts..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors rounded-full relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full ring-2 ring-slate-50"></span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors rounded-full">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-slate-200 ring-2 ring-primary-fixed/30">
+<img alt="User profile" data-alt="close up of clinical technician wearing professional lab gear with neutral concentrated expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2fl6zX_f1GlErTAHeHNWH9Pup_uXxtJPbepJab8NRL9sGpKpK6Vk_M7KhF0G_bUhwr1bscfLoBbpS1ycranujUSYVFYzOrctPW4Eb1XSUCOYH36UrX1mehPRpCrg-aAUTVD1XZzllvstj5Z6QOgF0VZVVdhE9aPYLxlg0byVCvBSf1CcG6z3MC2-eNbsZpxRVJ-tbGnZp5wAX3IqyFYysD-vadIM7LhmB2-xPPFY-sz2IvF2Tz2K11X9H5-yRsiED3gvDr34MBhJ3"/>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="flex-1 overflow-y-auto p-8 space-y-12">
+<!-- Summary Bento Grid -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Critical Stock Summary -->
+<div class="bg-error-container p-6 rounded-xl relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-full h-1 bg-error"></div>
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-on-error-container text-4xl" data-icon="emergency_home" style="font-variation-settings: 'FILL' 1;">emergency_home</span>
+<div class="bg-white/40 px-3 py-1 rounded-full text-xs font-bold text-on-error-container">CRITICAL</div>
+</div>
+<div class="space-y-1">
+<div class="text-on-error-container font-headline font-extrabold text-4xl">08</div>
+<div class="text-on-error-container/80 text-sm font-semibold uppercase tracking-wider">Critical Stock Items</div>
+</div>
+<div class="mt-6 flex items-center gap-2 text-xs font-bold text-on-error-container">
+<span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+                        +2 items since 08:00
+                    </div>
+</div>
+<!-- Low Stock Summary -->
+<div class="bg-tertiary-fixed p-6 rounded-xl relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-1 bg-[#683d00]"></div>
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-on-tertiary-fixed-variant text-4xl" data-icon="warning" style="font-variation-settings: 'FILL' 1;">warning</span>
+<div class="bg-white/40 px-3 py-1 rounded-full text-xs font-bold text-on-tertiary-fixed-variant">WARNING</div>
+</div>
+<div class="space-y-1">
+<div class="text-on-tertiary-fixed-variant font-headline font-extrabold text-4xl">14</div>
+<div class="text-on-tertiary-fixed-variant/80 text-sm font-semibold uppercase tracking-wider">Low Stock Threshold</div>
+</div>
+<div class="mt-6 flex items-center gap-2 text-xs font-bold text-on-tertiary-fixed-variant">
+<span class="material-symbols-outlined text-sm" data-icon="inventory_2">inventory_2</span>
+                        4 Reorders Pending
+                    </div>
+</div>
+<!-- Maintenance Summary -->
+<div class="bg-slate-900 text-white p-6 rounded-xl relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-1 bg-secondary"></div>
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-secondary-fixed text-4xl" data-icon="engineering" style="font-variation-settings: 'FILL' 1;">engineering</span>
+<div class="bg-white/10 px-3 py-1 rounded-full text-xs font-bold text-secondary-fixed">OVERDUE</div>
+</div>
+<div class="space-y-1">
+<div class="text-white font-headline font-extrabold text-4xl">03</div>
+<div class="text-slate-400 text-sm font-semibold uppercase tracking-wider">Equipment Overdue</div>
+</div>
+<div class="mt-6 flex items-center gap-2 text-xs font-bold text-secondary-fixed">
+<span class="material-symbols-outlined text-sm" data-icon="schedule">schedule</span>
+                        Avg 4.2 Days Delayed
+                    </div>
+</div>
+</section>
+<!-- Categorized Urgent Lists -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+<!-- Inventory Critical List -->
+<div class="space-y-6">
+<div class="flex items-center justify-between border-b border-outline-variant pb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-error" data-icon="inventory">inventory</span>
+<h2 class="text-lg font-bold text-on-surface uppercase tracking-tight">Stock Replenishment Required</h2>
+</div>
+<span class="text-xs font-bold text-outline uppercase">8 Active Alerts</span>
+</div>
+<div class="space-y-4">
+<!-- Item Card -->
+<div class="bg-white rounded-lg p-4 flex items-center gap-6 border-l-4 border-error shadow-sm hover:bg-surface-container-low transition-colors">
+<div class="w-12 h-12 bg-error-container rounded-lg flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-error" data-icon="science">science</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2 mb-0.5">
+<h3 class="font-bold text-on-surface truncate">Ethanol 99.9% (ACS Grade)</h3>
+<span class="bg-error-container text-on-error-container text-[10px] px-1.5 py-0.5 rounded font-black">CRITICAL</span>
+</div>
+<div class="text-xs text-on-surface-variant flex items-center gap-4">
+<span>Stock: 2L / 50L</span>
+<span class="w-1 h-1 bg-outline-variant rounded-full"></span>
+<span>SKU: ETH-009-X</span>
+</div>
+</div>
+<button class="px-4 py-2 bg-primary text-white text-xs font-bold rounded hover:bg-primary-container transition-colors shrink-0">Restock Now</button>
+</div>
+<!-- Item Card -->
+<div class="bg-white rounded-lg p-4 flex items-center gap-6 border-l-4 border-error shadow-sm hover:bg-surface-container-low transition-colors">
+<div class="w-12 h-12 bg-error-container rounded-lg flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-error" data-icon="biotech">biotech</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2 mb-0.5">
+<h3 class="font-bold text-on-surface truncate">Nitrate Assay Reagent B</h3>
+<span class="bg-error-container text-on-error-container text-[10px] px-1.5 py-0.5 rounded font-black">CRITICAL</span>
+</div>
+<div class="text-xs text-on-surface-variant flex items-center gap-4">
+<span>Stock: 10 units / 200 units</span>
+<span class="w-1 h-1 bg-outline-variant rounded-full"></span>
+<span>SKU: RE-NIT-B</span>
+</div>
+</div>
+<button class="px-4 py-2 bg-primary text-white text-xs font-bold rounded hover:bg-primary-container transition-colors shrink-0">Restock Now</button>
+</div>
+<!-- Low Stock (Amber) -->
+<div class="bg-white rounded-lg p-4 flex items-center gap-6 border-l-4 border-[#683d00] shadow-sm hover:bg-surface-container-low transition-colors">
+<div class="w-12 h-12 bg-tertiary-fixed rounded-lg flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-tertiary-fixed-variant" data-icon="vial">syringe</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2 mb-0.5">
+<h3 class="font-bold text-on-surface truncate">Pipette Tips (1000uL)</h3>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed-variant text-[10px] px-1.5 py-0.5 rounded font-black">LOW STOCK</span>
+</div>
+<div class="text-xs text-on-surface-variant flex items-center gap-4">
+<span>Stock: 500 / 2500</span>
+<span class="w-1 h-1 bg-outline-variant rounded-full"></span>
+<span>SKU: PIP-1K-S</span>
+</div>
+</div>
+<button class="px-4 py-2 bg-surface-container-high text-on-surface text-xs font-bold rounded hover:bg-surface-container-highest transition-colors shrink-0">Order Re-stock</button>
+</div>
+</div>
+</div>
+<!-- Maintenance Alerts List -->
+<div class="space-y-6">
+<div class="flex items-center justify-between border-b border-outline-variant pb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="build">build</span>
+<h2 class="text-lg font-bold text-on-surface uppercase tracking-tight">Equipment Maintenance</h2>
+</div>
+<span class="text-xs font-bold text-outline uppercase">3 Critical Failures</span>
+</div>
+<div class="space-y-4">
+<!-- Maintenance Card -->
+<div class="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden group">
+<div class="h-1 bg-error w-full"></div>
+<div class="p-4 flex gap-6">
+<div class="w-20 h-20 bg-white rounded border border-slate-100 overflow-hidden shrink-0">
+<img alt="Centrifuge" data-alt="high-tech laboratory centrifuge machine in a clinical cleanroom setting with sterile blue lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBevKlIT4e9x3GdlR9XsOPIEdBW3J778oXUM1mneFmAxWU3xm3FS5I-yl-T0jXAve5zjo17wc2K1uIESH4UtlWg5i_O9BxfMspB9yfGlaMRGrZKSmbd6z0Uy3irl4TAiqpSbBO889ziSrVhfHJbc9OsM_aUQqmWCYy0Z-sZUCYDMpitLtd837EBrkma_mWpK1aWq-7TCf6ymPcXZzk7HCuYVo96SEfLrhyFNDVsFPbRf09NP_smjDym6VJ69yV0mfz_4eR_SX-mM1mT"/>
+</div>
+<div class="flex-1 min-w-0 flex flex-col justify-between py-1">
+<div>
+<div class="flex items-center justify-between">
+<h3 class="font-bold text-on-surface">Precision Centrifuge X-44</h3>
+<span class="text-[10px] font-black text-error">7 DAYS OVERDUE</span>
+</div>
+<p class="text-xs text-on-surface-variant mt-1 italic">Vibration sensors reporting threshold breach during 40k RPM cycles.</p>
+</div>
+<div class="flex gap-2 mt-4">
+<button class="flex-1 py-2 bg-primary text-white text-xs font-bold rounded hover:scale-[1.01] transition-transform">Schedule Maintenance</button>
+<button class="px-3 py-2 bg-white border border-slate-200 text-on-surface-variant text-xs font-bold rounded hover:bg-slate-100">Review Logs</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Maintenance Card -->
+<div class="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden group">
+<div class="h-1 bg-error w-full"></div>
+<div class="p-4 flex gap-6">
+<div class="w-20 h-20 bg-white rounded border border-slate-100 overflow-hidden shrink-0">
+<img alt="Spectrometer" data-alt="close up of electronic technical component with circuit boards and mechanical precision parts" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYXBCwD9xwZWzQvwo31QUImbPHC8lveeLe-QLNL051MSLwoBf_SaE4dDZYpBqyAtLbJfpnGwwIUvye2LLkQUlKaY4WYGyOG-Rhn_PmhYHRG7DCdG5nXpaQUPSsEFMTkS48uOySUPm7VdDA3OSo_vfO7sTAblxe2s9bV80Uc9rrUjMNM3cn1B6qjVvbMM693BIHEODX_NRso9b4Rnr02nIo3GhI-fXedCRcmjBd0rG1s1jZ4K6e9xrRFD9ZEMyTxAYwyRFGwrLEsoDI"/>
+</div>
+<div class="flex-1 min-w-0 flex flex-col justify-between py-1">
+<div>
+<div class="flex items-center justify-between">
+<h3 class="font-bold text-on-surface">Mass Spectrometer L-100</h3>
+<span class="text-[10px] font-black text-error">CALIBRATION FAILED</span>
+</div>
+<p class="text-xs text-on-surface-variant mt-1 italic">Last automated calibration check failed. Manual diagnostic required.</p>
+</div>
+<div class="flex gap-2 mt-4">
+<button class="flex-1 py-2 bg-primary text-white text-xs font-bold rounded hover:scale-[1.01] transition-transform">Run Deep Calibration</button>
+<button class="px-3 py-2 bg-white border border-slate-200 text-on-surface-variant text-xs font-bold rounded hover:bg-slate-100">Support Case</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Operational Activity Sidebar-like Layout (Asymmetry) -->
+<section class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+<div class="lg:col-span-3 space-y-4">
+<h2 class="text-xs font-black text-slate-500 uppercase tracking-widest">Recent System Health Logs</h2>
+<div class="bg-white rounded-xl shadow-sm overflow-hidden divide-y divide-slate-100 border border-slate-100">
+<div class="p-4 flex items-center justify-between text-sm">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 bg-secondary rounded-full"></div>
+<span class="font-semibold text-slate-700">Lab Temp Stable</span>
+<span class="text-xs text-slate-400">Main Hallway - 22.4°C</span>
+</div>
+<span class="text-xs font-body text-slate-400">12:45 PM</span>
+</div>
+<div class="p-4 flex items-center justify-between text-sm">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 bg-error rounded-full"></div>
+<span class="font-semibold text-slate-700">Storage Freezer Door Open</span>
+<span class="text-xs text-slate-400">Section B-04 - 45 seconds alert</span>
+</div>
+<span class="text-xs font-body text-slate-400">12:38 PM</span>
+</div>
+<div class="p-4 flex items-center justify-between text-sm">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 bg-secondary rounded-full"></div>
+<span class="font-semibold text-slate-700">Stock Inbound: Nitrile Gloves</span>
+<span class="text-xs text-slate-400">50 Cartons received</span>
+</div>
+<span class="text-xs font-body text-slate-400">12:12 PM</span>
+</div>
+<div class="p-4 flex items-center justify-between text-sm">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 bg-secondary rounded-full"></div>
+<span class="font-semibold text-slate-700">Auto-Calibration Success</span>
+<span class="text-xs text-slate-400">Incubator Unit 9</span>
+</div>
+<span class="text-xs font-body text-slate-400">11:55 AM</span>
+</div>
+</div>
+</div>
+<!-- Right Side Asymmetric Module: Quick Metrics -->
+<div class="lg:col-span-1 space-y-6">
+<div class="bg-surface-container-high p-6 rounded-2xl">
+<h4 class="text-xs font-black text-primary uppercase tracking-widest mb-4">Laboratory Pulse</h4>
+<div class="space-y-4">
+<div class="space-y-1.5">
+<div class="flex justify-between text-xs font-bold text-on-surface">
+<span>Reagent Capacity</span>
+<span>84%</span>
+</div>
+<div class="h-1 w-full bg-white rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[84%]"></div>
+</div>
+</div>
+<div class="space-y-1.5">
+<div class="flex justify-between text-xs font-bold text-on-surface">
+<span>Uptime Performance</span>
+<span>92.8%</span>
+</div>
+<div class="h-1 w-full bg-white rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[92%]"></div>
+</div>
+</div>
+<div class="space-y-1.5">
+<div class="flex justify-between text-xs font-bold text-on-surface">
+<span>Maintenance Backlog</span>
+<span>12%</span>
+</div>
+<div class="h-1 w-full bg-white rounded-full overflow-hidden">
+<div class="h-full bg-error w-[12%]"></div>
+</div>
+</div>
+</div>
+<div class="mt-8 pt-6 border-t border-slate-300">
+<div class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Alert Coordinator</div>
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-white text-[10px] font-bold">DR</div>
+<div>
+<div class="text-xs font-bold text-primary">Dr. Sarah Jenkins</div>
+<div class="text-[10px] text-slate-500">Chief Technologist</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</body></html>

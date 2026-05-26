@@ -1,0 +1,17 @@
+{
+  "name": "send_email_basic",
+  "description": "Basic email dispatch",
+  "seed_data": {},
+  "request": {
+    "method": "POST",
+    "path": "/api/email/send",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "to": "recipient@example.com",
+      "subject": "Test Email",
+      "body": "Test email body"
+    }
+  }
+}

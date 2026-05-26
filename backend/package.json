@@ -1,0 +1,24 @@
+{
+  "name": "labmanager-backend",
+  "private": true,
+  "scripts": {
+    "dev:http": "node ./dist/http/run-server.js",
+    "qa:p0": "node ./dist/qa/p0-validation.js",
+    "qa:p0:persistence": "node ./dist/qa/p0-persistence-validation.js",
+    "qa:p1": "node ./dist/qa/p1-validation.js",
+    "qa:p2": "node ./dist/qa/p2-validation.js",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
+    "nodemailer": "^8.0.5",
+    "pdf-lib": "^1.17.1",
+    "pg": "^8.20.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/nodemailer": "^8.0.0",
+    "@types/pg": "^8.20.0"
+  }
+}

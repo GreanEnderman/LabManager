@@ -1,0 +1,74 @@
+name: Regression Tests
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r tests/regression/requirements.txt
+
+      - name: Start TS backend
+        run: |
+          cd backend
+          npm install
+          npm start &
+          sleep 10
+
+      - name: Start Python backend
+        run: |
+          cd python_backend
+          pip install -r requirements.txt
+          python main.py &
+          sleep 10
+
+      - name: Run regression tests
+        run: |
+          pytest tests/regression/ -v --tb=short
+
+      - name: Check adjudication status
+        run: |
+          python -m tests.regression.adjudication.cli status
+          python -c "
+          from tests.regression.adjudication.workflow import ReviewerWorkflow
+          workflow = ReviewerWorkflow()
+          can_proceed, issues = workflow.can_approve_traffic_switch()
+          if not can_proceed:
+              print('FAIL: Unadjudicated differences found:')
+              for issue in issues:
+                  print(f'  - {issue}')
+              exit(1)
+          print('PASS: All differences adjudicated')
+          "
+
+      - name: Upload diff logs
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: regression-diffs
+          path: tests/regression/diffs/

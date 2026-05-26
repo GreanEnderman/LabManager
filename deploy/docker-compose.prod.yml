@@ -1,0 +1,98 @@
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      # Terminate TLS at a host-level proxy/load balancer, or add a cert volume and 443 server block.
+      # - "443:443"
+    volumes:
+      - ../frontend/dist:/usr/share/nginx/html:ro
+      - ./nginx/labmanager.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ../python_backend
+    env_file:
+      - ./env.production
+    expose:
+      - "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=5).read()",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ../python_backend
+    env_file:
+      - ./env.production
+    command: celery -A app.tasks.celery_app:celery_app worker --loglevel=info
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  beat:
+    build:
+      context: ../python_backend
+    env_file:
+      - ./env.production
+    command: celery -A app.tasks.celery_app:celery_app beat --loglevel=info
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: labmanager
+      POSTGRES_USER: labmanager
+      POSTGRES_PASSWORD: change-me
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U labmanager -d labmanager"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  redis-data:
+

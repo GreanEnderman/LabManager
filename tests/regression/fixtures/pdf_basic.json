@@ -1,0 +1,21 @@
+{
+  "name": "generate_pdf_basic",
+  "description": "Basic PDF generation",
+  "seed_data": {},
+  "request": {
+    "method": "POST",
+    "path": "/api/pdf/generate",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "template": "invoice",
+      "data": {
+        "title": "Test Invoice",
+        "items": [
+          {"name": "Item 1", "price": 100}
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,2 @@
+"""LangGraph integration boundary."""
+

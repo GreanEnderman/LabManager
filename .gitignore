@@ -1,0 +1,82 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs and runtime temp files
+*.log
+logs/
+tmp/
+temp/
+.tmp/
+.cache/
+.omx/logs/
+.omx/state/
+.omx/metrics.json
+
+# Dependency directories
+node_modules/
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.egg-info/
+
+# Build outputs and coverage
+dist/
+build/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Archives and ad hoc delivery bundles
+*.zip
+*.tar
+*.gz
+*.7z
+*.rar
+
+# Generated export artifacts
+mermaid-diagram-*.png
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+.env.staging
+.env.staging.local
+!.env.example
+!.env.template
+!backend/.env.example
+!frontend/.env.example
+!python_backend/.env.example
+!deploy/env.production.example
+deploy/env.production
+
+# Local assistant/editor state
+.agents/
+.codex/
+.claude/
+.omx/
+.claude/settings.local.json
+
+# Local scheduler/runtime artifacts
+celerybeat-schedule.*
+
+# Ad hoc local check scripts; keep formal tests under tests/ and python_backend/tests/
+check_*.py
+check_services.bat
+python_backend/check_*.py
+python_backend/test_*.py
+python_backend/test_*.bat
+python_backend/sample_data.sql

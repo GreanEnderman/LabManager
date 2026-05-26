@@ -1,0 +1,40 @@
+[project]
+name = "labmanager-python-backend"
+version = "0.1.0"
+description = "Minimal Python backend foundation for LabManager."
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "asyncpg>=0.29,<1.0",
+  "celery>=5.4,<6.0",
+  "fastapi>=0.115,<1.0",
+  "langgraph>=0.2,<1.0",
+  "pydantic-settings>=2.4,<3.0",
+  "psycopg[binary]>=3.2,<4.0",
+  "pydyf>=0.9.0,<0.10.0",
+  "python-dotenv>=1.0,<2.0",
+  "redis>=5.1,<6.0",
+  "uvicorn[standard]>=0.30,<1.0",
+  "weasyprint>=60.0,<61.0",
+]
+
+[project.scripts]
+labmanager-db = "app.db.manage:main"
+
+[project.optional-dependencies]
+dev = [
+  "httpx>=0.27,<1.0",
+  "pytest>=8.3,<9.0",
+  "requests>=2.32,<3.0",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

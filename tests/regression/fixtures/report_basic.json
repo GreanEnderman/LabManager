@@ -1,0 +1,20 @@
+{
+  "name": "generate_report_basic",
+  "description": "Basic report generation",
+  "seed_data": {
+    "reports": [
+      {
+        "id": "test-report-1",
+        "name": "Test Report",
+        "type": "summary"
+      }
+    ]
+  },
+  "request": {
+    "method": "GET",
+    "path": "/api/reports/test-report-1",
+    "headers": {
+      "Accept": "application/json"
+    }
+  }
+}

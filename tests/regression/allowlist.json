@@ -1,0 +1,18 @@
+{
+  "global": [
+    "timestamp",
+    "createdAt",
+    "updatedAt",
+    "id",
+    "uuid",
+    "requestId"
+  ],
+  "endpoints": {
+    "/api/tasks": [],
+    "/api/approvals": [],
+    "/api/imports": [],
+    "/api/reports/:id": [],
+    "/api/pdf/generate": [],
+    "/api/email/send": []
+  }
+}

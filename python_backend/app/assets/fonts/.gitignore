@@ -1,0 +1,4 @@
+# Font files are bundled for PDF generation
+# Download from: https://github.com/notofonts/noto-cjk/releases
+*.otf
+*.ttf

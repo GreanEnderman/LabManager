@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Equipment Management | Clinical Precision Workbench</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#ffdcbc",
+                    "secondary-container": "#7cf8d9",
+                    "inverse-surface": "#2e3132",
+                    "on-tertiary-fixed": "#2c1700",
+                    "tertiary-container": "#532f00",
+                    "on-surface-variant": "#41484b",
+                    "on-error": "#ffffff",
+                    "tertiary": "#351c00",
+                    "primary-fixed-dim": "#9ecee1",
+                    "primary-container": "#003d4d",
+                    "primary": "#002631",
+                    "surface-container-high": "#e7e8e9",
+                    "outline-variant": "#c0c8cc",
+                    "on-primary-fixed": "#001f28",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-secondary-container": "#00725e",
+                    "error": "#ba1a1a",
+                    "primary-fixed": "#baeafe",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed-variant": "#194d5d",
+                    "on-secondary-fixed-variant": "#005142",
+                    "inverse-on-surface": "#f0f1f2",
+                    "surface-bright": "#f8f9fa",
+                    "background": "#f8f9fa",
+                    "surface-container": "#edeeef",
+                    "on-primary": "#ffffff",
+                    "inverse-primary": "#9ecee1",
+                    "on-surface": "#191c1d",
+                    "on-primary-container": "#79a8ba",
+                    "outline": "#71787c",
+                    "surface-dim": "#d9dadb",
+                    "surface-variant": "#e1e3e4",
+                    "surface-container-low": "#f3f4f5",
+                    "secondary": "#006b59",
+                    "on-tertiary-fixed-variant": "#683d00",
+                    "surface-tint": "#356476",
+                    "secondary-fixed": "#7cf8d9",
+                    "on-error-container": "#93000a",
+                    "on-background": "#191c1d",
+                    "on-secondary": "#ffffff",
+                    "secondary-fixed-dim": "#5ddbbd",
+                    "surface": "#f8f9fa",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-container": "#e68c00",
+                    "on-secondary-fixed": "#002019",
+                    "tertiary-fixed-dim": "#ffb86b"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .brand-font { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-full border-r border-slate-200 dark:border-slate-800 p-4 docked h-full left-0 w-64 bg-slate-100 dark:bg-slate-950 fixed">
+<div class="flex items-center gap-3 mb-8 px-2">
+<div class="w-10 h-10 rounded bg-primary-container flex items-center justify-center text-white">
+<span class="material-symbols-outlined" data-icon="biotech">biotech</span>
+</div>
+<div>
+<h1 class="text-lg font-black text-[#003d4d] dark:text-[#f8f9fa] leading-none">Material Ops</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mt-1">Clinical Precision</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-[#003d4d] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-[#003d4d] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="biotech">biotech</span>
+<span class="font-medium">Chemical Inventory</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-[#003d4d] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="swap_horiz">swap_horiz</span>
+<span class="font-medium">Inbound/Outbound</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-white dark:bg-slate-800 text-[#003d4d] dark:text-white font-bold rounded-lg shadow-sm" href="#">
+<span class="material-symbols-outlined" data-icon="precision_manufacturing">precision_manufacturing</span>
+<span class="font-medium">Equipment Management</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-[#003d4d] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="build">build</span>
+<span class="font-medium">Maintenance</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-[#003d4d] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="notifications_active">notifications_active</span>
+<span class="font-medium">Alert Center</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-[#003d4d] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-medium">Settings</span>
+</a>
+</nav>
+<div class="mt-auto pt-6">
+<button class="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-primary to-primary-container text-white font-bold rounded-lg shadow-lg hover:scale-[1.02] transition-transform">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                Run New Test
+            </button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-64 min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center w-full px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 sticky top-0 z-10">
+<div class="flex items-center gap-6">
+<h2 class="text-xl font-bold text-[#003d4d] dark:text-[#f8f9fa] tracking-tight">Clinical Precision Workbench</h2>
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" data-icon="search">search</span>
+<input class="bg-surface-container-low border-none rounded-full pl-10 pr-4 py-1.5 text-sm w-64 focus:ring-2 focus:ring-primary" placeholder="Search equipment ID..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-slate-300 overflow-hidden ml-2">
+<img class="w-full h-full object-cover" data-alt="close-up portrait of a female lab technician wearing protective eyewear and professional scrubs in a brightly lit medical facility" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMjbanIGDhAijr2CnAR-EelaATwOTs-QvCrtvNG47fx1xrZDUdsYk_A2wz0VsgrzLuGj8RJW3s1FcCsh4NbTiXqJUkF4Pj1yy9dJMHfHy7gKnMzBLhAisCydS1fiRQjPEjn1KnVUuOH0_xUiDw53WN88y9s1Am01-VOaS1bXbsNXHDARbqJfazSYctNLNoEITCw6oIEbGjD1jFBKSz4x2eDQRux5dlIbsPC74_9EDzCEKaswAhHQr4TJdAMQT41_gRv8aOZTE6I0sL"/>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="p-8 max-w-7xl mx-auto w-full">
+<!-- Toolbar -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+<div>
+<h3 class="text-3xl font-extrabold text-on-surface tracking-tight mb-2">Instrumentation Fleet</h3>
+<p class="text-on-surface-variant font-medium">Manage and monitor 24 high-precision clinical assets.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2.5 bg-surface-container-high text-on-surface font-semibold rounded-lg hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="filter_list">filter_list</span>
+                        Filter
+                    </button>
+<button class="flex items-center gap-2 px-6 py-2.5 bg-primary-container text-on-primary font-bold rounded-lg shadow-sm hover:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined text-xl" data-icon="add_box">add_box</span>
+                        Add Equipment
+                    </button>
+</div>
+</div>
+<!-- Stats Overview (Asymmetric Bento Grid) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6 mb-12">
+<div class="md:col-span-4 bg-surface-container-lowest p-6 rounded-xl border border-transparent shadow-[0_4px_20px_-10px_rgba(25,28,29,0.06)]">
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold uppercase tracking-widest text-slate-400">Total Operational</span>
+<span class="material-symbols-outlined text-secondary" data-icon="check_circle">check_circle</span>
+</div>
+<div class="text-4xl font-extrabold text-[#003d4d]">18/24</div>
+<div class="w-full h-1 bg-slate-100 rounded-full mt-4 overflow-hidden">
+<div class="w-[75%] h-full bg-secondary"></div>
+</div>
+</div>
+<div class="md:col-span-4 bg-surface-container-lowest p-6 rounded-xl border border-transparent shadow-[0_4px_20px_-10px_rgba(25,28,29,0.06)]">
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold uppercase tracking-widest text-slate-400">Pending Maintenance</span>
+<span class="material-symbols-outlined text-tertiary-fixed-dim" data-icon="warning" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div class="text-4xl font-extrabold text-[#003d4d]">04</div>
+<p class="text-sm text-on-surface-variant mt-2 font-medium">Critical focus required for 2 items</p>
+</div>
+<div class="md:col-span-4 bg-surface-container-lowest p-6 rounded-xl border border-transparent shadow-[0_4px_20px_-10px_rgba(25,28,29,0.06)]">
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold uppercase tracking-widest text-slate-400">System Alert</span>
+<span class="material-symbols-outlined text-error" data-icon="error" style="font-variation-settings: 'FILL' 1;">error</span>
+</div>
+<div class="text-4xl font-extrabold text-error">02</div>
+<p class="text-sm text-error font-semibold mt-2">Fault detected in Wing B Spectrometers</p>
+</div>
+</div>
+<!-- Equipment Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Card 1 -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden flex flex-col transition-all hover:translate-y-[-4px] hover:shadow-xl">
+<div class="relative h-48 w-full overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="close-up of a modern white professional centrifuge machine in a clean sterile laboratory environment with blue light accents" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuIDniEhVgwyTQqcqOWFl9HgGU3RRsEfYXnR2_1YOITbALmCNYpVOJQiuVw9TgpWcyYMSjr8sLq4wqkbZOWD4apD2AjrtMdOkBuNRzyLBkpCa6m3UFfS3omovTM6-HjPp7SaJQIjb0bJZr_CB5exDtQmVyqhTjW6LptimYuBs0gxMGLAu-j9N8upJgyaAB_jhp9WZKUcj1voL3CNIjHgrxNZ15AkOengPo7eyJhr-Hbegg6FmBW4r3x6mBfGoXDL0iS5dLo2QiKwTv"/>
+<div class="absolute top-4 right-4">
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase tracking-widest rounded-full flex items-center gap-1.5 backdrop-blur-sm">
+<span class="w-1.5 h-1.5 bg-secondary rounded-full animate-pulse"></span>
+                                Available
+                            </span>
+</div>
+</div>
+<div class="p-6 flex-1 flex flex-col">
+<div class="mb-4">
+<h4 class="text-lg font-bold text-on-surface mb-1">Ultra-Centrifuge X12</h4>
+<p class="text-xs font-mono text-slate-500 tracking-tighter uppercase">MODEL: CF-9920-B</p>
+</div>
+<div class="space-y-4 mb-6">
+<div class="flex justify-between items-center py-2 border-b border-slate-50">
+<span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Last Maintained</span>
+<span class="text-sm font-medium text-on-surface">Oct 12, 2023</span>
+</div>
+<div class="flex justify-between items-center py-2 border-b border-slate-50">
+<span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Next Due</span>
+<span class="text-sm font-bold text-secondary">Apr 12, 2024</span>
+</div>
+</div>
+<div class="mt-auto flex gap-2">
+<button class="flex-1 py-2 text-sm font-bold text-[#003d4d] border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Details</button>
+<button class="px-3 py-2 text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="history">history</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden flex flex-col transition-all hover:translate-y-[-4px] hover:shadow-xl">
+<div class="relative h-48 w-full overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="detailed view of precision liquid handling robotics system with silver mechanical parts and clear pipettes in a sterile facility" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHDXEfu_MQe6CNnBy2w0cAcgL35a51FbTez8vSXgsI5JVuRQcSDHPySP-RMKWqJJW1ScVcRrDqeg8a7rDpIDxkXURX0dniyHCAaW5bizZzm9ZSD3HtPYIOGkIrmOVXMqPkdnC4Py_yfTyF5RS7leM8PiPsNIXBmYipHwuE1Gzz2GEoV-4LVvd7yIJ6TcU6PSH4Qm5Xg3puDpjh6XgwefPdp2aq89bqeP3UKdPx78fA-in5o5rqaKP3sOxvPfHrZGSKdbVmyZ6qVM_U"/>
+<div class="absolute top-4 right-4">
+<span class="px-3 py-1 bg-tertiary-fixed text-on-tertiary-fixed-variant text-[10px] font-bold uppercase tracking-widest rounded-full flex items-center gap-1.5 backdrop-blur-sm">
+<span class="material-symbols-outlined text-[12px]" data-icon="build">build</span>
+                                Maintenance
+                            </span>
+</div>
+</div>
+<div class="p-6 flex-1 flex flex-col">
+<div class="mb-4">
+<h4 class="text-lg font-bold text-on-surface mb-1">Liquid Handler Pro</h4>
+<p class="text-xs font-mono text-slate-500 tracking-tighter uppercase">MODEL: LH-PRO-V2</p>
+</div>
+<div class="space-y-4 mb-6">
+<div class="flex justify-between items-center py-2 border-b border-slate-50">
+<span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Last Maintained</span>
+<span class="text-sm font-medium text-on-surface">Jan 05, 2024</span>
+</div>
+<div class="flex justify-between items-center py-2 border-b border-slate-50">
+<span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Next Due</span>
+<span class="text-sm font-bold text-tertiary-fixed-dim">IN PROGRESS</span>
+</div>
+</div>
+<div class="mt-auto flex gap-2">
+<button class="flex-1 py-2 text-sm font-bold text-[#003d4d] border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Details</button>
+<button class="px-3 py-2 text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="history">history</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden flex flex-col transition-all hover:translate-y-[-4px] hover:shadow-xl">
+<div class="relative h-48 w-full overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="professional laboratory mass spectrometer machine with glowing digital display and metallic finishes in a dark high-tech room" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMKCzF5whBd5o3uq0oJs2oEw6kxLIInrJ9GS_ZxNuixv79Yrr9y_vAerKnFxJwXF2GJOcY7mH9O8Yey2UohJHhRjONgJ7hySksjOeIi0vHnMOg5pwOZbWTyjVz8qLOVHO-LREfUb8DX921MEZLoEaMXf_w66ezEOBx7GPGPD8KtN0imydAd8lMCXt120rh21O3XX1CDbIbw2thVyF5Su8XVUjDa66VQFlR8Gis3ijwYiFy-bmSCrtW64M7eUYmqd5bkty6uiaze52B"/>
+<div class="absolute top-4 right-4">
+<span class="px-3 py-1 bg-error-container text-on-error-container text-[10px] font-bold uppercase tracking-widest rounded-full flex items-center gap-1.5 backdrop-blur-sm">
+<span class="material-symbols-outlined text-[12px]" data-icon="report_problem">report_problem</span>
+                                Faulty
+                            </span>
+</div>
+</div>
+<div class="p-6 flex-1 flex flex-col">
+<div class="mb-4">
+<h4 class="text-lg font-bold text-on-surface mb-1">Mass Spectrometer T8</h4>
+<p class="text-xs font-mono text-slate-500 tracking-tighter uppercase">MODEL: MS-ALPHA-8</p>
+</div>
+<div class="space-y-4 mb-6">
+<div class="flex justify-between items-center py-2 border-b border-slate-50">
+<span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Last Maintained</span>
+<span class="text-sm font-medium text-on-surface">Aug 20, 2023</span>
+</div>
+<div class="flex justify-between items-center py-2 border-b border-slate-50">
+<span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Next Due</span>
+<span class="text-sm font-bold text-error">OVERDUE</span>
+</div>
+</div>
+<div class="mt-auto flex gap-2">
+<button class="flex-1 py-2 text-sm font-bold text-error border border-error-container rounded-lg hover:bg-error-container/20 transition-colors">Emergency Fix</button>
+<button class="px-3 py-2 text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="history">history</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden flex flex-col transition-all hover:translate-y-[-4px] hover:shadow-xl">
+<div class="relative h-48 w-full overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="high magnification view of an electron microscope ocular lenses with complex mechanical adjustments and metallic surface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZMRP5Skak2cDMeZgSQJ3jrZ0WqZH0hTlztaMw-h08sTS-kMs4jgG1iF2CanYSksE1BgU3fxFplRq9fs-3H0JplizsPobvc96ijunL9yjMw_WMAlo8-0K9EGYGElcadvggaAcGve7ij1eT_QU23TAYQWKz5XelBHpRhwrjoDHAnaiS9EHtVxx0gMhp6j1l6Rg3TdnFcHfcb4wineETdVoa6IexRLqAiALNnOsqYPk-werQjQL-gb9-n7oZ7KnYeCuh3PotNVh1h7P9"/>
+<div class="absolute top-4 right-4">
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase tracking-widest rounded-full flex items-center gap-1.5 backdrop-blur-sm">
+<span class="w-1.5 h-1.5 bg-secondary rounded-full"></span>
+                                Available
+                            </span>
+</div>
+</div>
+<div class="p-6 flex-1 flex flex-col">
+<div class="mb-4">
+<h4 class="text-lg font-bold text-on-surface mb-1">Scanning Electron Mic</h4>
+<p class="text-xs font-mono text-slate-500 tracking-tighter uppercase">MODEL: SEM-700-ULTRA</p>
+</div>
+<div class="space-y-4 mb-6">
+<div class="flex justify-between items-center py-2 border-b border-slate-50">
+<span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Last Maintained</span>
+<span class="text-sm font-medium text-on-surface">Dec 01, 2023</span>
+</div>
+<div class="flex justify-between items-center py-2 border-b border-slate-50">
+<span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Next Due</span>
+<span class="text-sm font-bold text-on-surface">Jun 01, 2024</span>
+</div>
+</div>
+<div class="mt-auto flex gap-2">
+<button class="flex-1 py-2 text-sm font-bold text-[#003d4d] border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Details</button>
+<button class="px-3 py-2 text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="history">history</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 5 -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden flex flex-col transition-all hover:translate-y-[-4px] hover:shadow-xl">
+<div class="relative h-48 w-full overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="digital incubator with glowing internal LED lighting and neatly stacked petri dishes in a sterile laboratory setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmhTxn4G6YFgXiYb6zv3O2lACuXHAQ8yIC9frkOdXmC5fVeXxvD7LtcfP4XafxNZM1heAAHJBU23JeD8D-fImIY1iVDgv582XahnNcsIUDiiZKI0fk7Cy72P5niyzzZkky1CxaFXTITvmlu73tw6zFY9A8-8-zSTq1VpIdeBIzzuKRfqNTLwIBasxEG2kzmkOdHUjnPerpIa6Ye-KeZtKGaLv37K4xEUXDx8m_0zvPiJXBsczNwOdt9kRUe5KluNKVh8XekkUjimE4"/>
+<div class="absolute top-4 right-4">
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase tracking-widest rounded-full flex items-center gap-1.5 backdrop-blur-sm">
+<span class="w-1.5 h-1.5 bg-secondary rounded-full"></span>
+                                Available
+                            </span>
+</div>
+</div>
+<div class="p-6 flex-1 flex flex-col">
+<div class="mb-4">
+<h4 class="text-lg font-bold text-on-surface mb-1">CO2 Incubator 400</h4>
+<p class="text-xs font-mono text-slate-500 tracking-tighter uppercase">MODEL: INC-CO2-4X</p>
+</div>
+<div class="space-y-4 mb-6">
+<div class="flex justify-between items-center py-2 border-b border-slate-50">
+<span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Last Maintained</span>
+<span class="text-sm font-medium text-on-surface">Nov 15, 2023</span>
+</div>
+<div class="flex justify-between items-center py-2 border-b border-slate-50">
+<span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Next Due</span>
+<span class="text-sm font-bold text-on-surface">May 15, 2024</span>
+</div>
+</div>
+<div class="mt-auto flex gap-2">
+<button class="flex-1 py-2 text-sm font-bold text-[#003d4d] border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Details</button>
+<button class="px-3 py-2 text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="history">history</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Add Card Empty State -->
+<div class="border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center p-8 bg-surface-container-low hover:bg-surface-container-high transition-colors cursor-pointer">
+<div class="w-16 h-16 rounded-full bg-slate-200 flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-3xl text-slate-500" data-icon="add">add</span>
+</div>
+<span class="text-lg font-bold text-slate-600">Register New Asset</span>
+<p class="text-sm text-slate-400 mt-2 text-center">Add hardware to the Materia Ops ecosystem</p>
+</div>
+</div>
+</div>
+<!-- Floating Action Button (Mobile Only) -->
+<button class="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center z-50">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-slate-200 px-6 py-3 flex justify-between items-center z-40">
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[10px] font-bold">DASH</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined" data-icon="precision_manufacturing" style="font-variation-settings: 'FILL' 1;">precision_manufacturing</span>
+<span class="text-[10px] font-bold">ASSETS</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="text-[10px] font-bold">ALERTS</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-[10px] font-bold">CONFIG</span>
+</button>
+</nav>
+</main>
+</body></html>

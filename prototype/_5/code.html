@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Inbound/Outbound Records | Clinical Precision Workbench</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#ffdcbc",
+                    "secondary-container": "#7cf8d9",
+                    "inverse-surface": "#2e3132",
+                    "on-tertiary-fixed": "#2c1700",
+                    "tertiary-container": "#532f00",
+                    "on-surface-variant": "#41484b",
+                    "on-error": "#ffffff",
+                    "tertiary": "#351c00",
+                    "primary-fixed-dim": "#9ecee1",
+                    "primary-container": "#003d4d",
+                    "primary": "#002631",
+                    "surface-container-high": "#e7e8e9",
+                    "outline-variant": "#c0c8cc",
+                    "on-primary-fixed": "#001f28",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-secondary-container": "#00725e",
+                    "error": "#ba1a1a",
+                    "primary-fixed": "#baeafe",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed-variant": "#194d5d",
+                    "on-secondary-fixed-variant": "#005142",
+                    "inverse-on-surface": "#f0f1f2",
+                    "surface-bright": "#f8f9fa",
+                    "background": "#f8f9fa",
+                    "surface-container": "#edeeef",
+                    "on-primary": "#ffffff",
+                    "inverse-primary": "#9ecee1",
+                    "on-surface": "#191c1d",
+                    "on-primary-container": "#79a8ba",
+                    "outline": "#71787c",
+                    "surface-dim": "#d9dadb",
+                    "surface-variant": "#e1e3e4",
+                    "surface-container-low": "#f3f4f5",
+                    "secondary": "#006b59",
+                    "on-tertiary-fixed-variant": "#683d00",
+                    "surface-tint": "#356476",
+                    "secondary-fixed": "#7cf8d9",
+                    "on-error-container": "#93000a",
+                    "on-background": "#191c1d",
+                    "on-secondary": "#ffffff",
+                    "secondary-fixed-dim": "#5ddbbd",
+                    "surface": "#f8f9fa",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-container": "#e68c00",
+                    "on-secondary-fixed": "#002019",
+                    "tertiary-fixed-dim": "#ffb86b"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .headline { font-family: 'Manrope', sans-serif; }
+        .glass-drawer {
+            background: rgba(248, 249, 250, 0.7);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface flex h-screen overflow-hidden">
+<!-- SideNavBar (Authority: JSON) -->
+<aside class="hidden md:flex flex-col h-full border-r border-slate-200 dark:border-slate-800 p-4 bg-slate-100 dark:bg-slate-950 docked h-full left-0 w-64">
+<div class="flex items-center gap-3 mb-8 px-2">
+<div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white" data-icon="biotech">biotech</span>
+</div>
+<div>
+<div class="text-lg font-black text-[#003d4d] dark:text-[#f8f9fa] leading-none">Material Ops</div>
+<div class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mt-1">Clinical Precision</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-[#003d4d] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-medium text-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-[#003d4d] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="biotech">biotech</span>
+<span class="font-medium text-sm">Chemical Inventory</span>
+</a>
+<!-- Active Navigation (Semantic Mapping: Inbound/Outbound) -->
+<a class="flex items-center gap-3 px-3 py-2.5 bg-white dark:bg-slate-800 text-[#003d4d] dark:text-white font-bold rounded-lg shadow-sm" href="#">
+<span class="material-symbols-outlined" data-icon="swap_horiz">swap_horiz</span>
+<span class="font-bold text-sm">Inbound/Outbound</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-[#003d4d] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="precision_manufacturing">precision_manufacturing</span>
+<span class="font-medium text-sm">Equipment Management</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-[#003d4d] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="build">build</span>
+<span class="font-medium text-sm">Maintenance</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-[#003d4d] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="notifications_active">notifications_active</span>
+<span class="font-medium text-sm">Alert Center</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-[#003d4d] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-medium text-sm">Settings</span>
+</a>
+</nav>
+<div class="mt-auto pt-6">
+<button class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#003d4d] to-[#006b59] text-white py-3 px-4 rounded-lg font-semibold text-sm shadow-md transition-transform active:scale-[0.98]">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+                Run New Test
+            </button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col min-w-0 bg-surface overflow-hidden">
+<!-- TopNavBar (Authority: JSON) -->
+<header class="flex justify-between items-center w-full px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 docked full-width top-0 z-10">
+<div class="flex items-center gap-8">
+<h1 class="text-xl font-bold text-[#003d4d] dark:text-[#f8f9fa] tracking-tight headline">Clinical Precision Workbench</h1>
+<div class="relative group hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" data-icon="search">search</span>
+<input class="bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-2 text-sm w-80 focus:ring-2 focus:ring-primary" placeholder="Search records, lot numbers, handlers..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex gap-1">
+<button class="p-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+<div class="h-8 w-[1px] bg-slate-200 mx-2"></div>
+<div class="flex items-center gap-3">
+<div class="text-right hidden sm:block">
+<div class="text-sm font-semibold text-on-surface">Dr. Aris Thorne</div>
+<div class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Lead Researcher</div>
+</div>
+<img alt="User profile" class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm" data-alt="professional portrait of a middle-aged male doctor with glasses and white coat in a clean laboratory setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9alGhuvAAD8AZ7ipxejbKvmtcVG604REsy9L1lTC9mdw-FpGedrl1WhboXHbAcmCO3JsffnIVBJOqdxXvfCte4wtyMl6e78aK3FUDifbjD-GgYkOtVf0MujUEm5wPTpOblAPxl_BND8Px62odV8TVkab1vUXLNb0myuPMw2AaUwPDI9NyA9DFksJLcvCiSj5ZCzjxjFE0LTCU3iTWR5ofT-Olk2aaMczqDVyJw5jCENRBPHnHaOnfVSgm2Cy64E_g2xcSSZhY5xxv"/>
+</div>
+</div>
+</header>
+<!-- Records Page Layout -->
+<div class="flex-1 overflow-y-auto p-8 flex flex-col gap-8">
+<!-- Context Header & Metrics -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<div class="text-[12px] font-bold tracking-[0.1em] text-secondary uppercase mb-2">Inventory Management</div>
+<h2 class="text-3xl font-extrabold text-on-surface headline">Movement Ledger</h2>
+</div>
+<div class="flex gap-4">
+<div class="bg-surface-container-low px-6 py-4 rounded-xl border-l-4 border-secondary shadow-sm">
+<div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Inbound (24h)</div>
+<div class="text-2xl font-black text-on-surface">1,248.5 kg</div>
+</div>
+<div class="bg-surface-container-low px-6 py-4 rounded-xl border-l-4 border-outline shadow-sm">
+<div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Outbound (24h)</div>
+<div class="text-2xl font-black text-on-surface">842.1 kg</div>
+</div>
+</div>
+</section>
+<!-- Navigation Tabs (Technical Editorial Style) -->
+<div class="flex border-b border-surface-container-high">
+<button class="px-8 py-4 text-[#003d4d] dark:text-[#f8f9fa] border-b-2 border-[#006b59] font-bold text-sm tracking-tight transition-all">
+                    Records History
+                </button>
+<button class="px-8 py-4 text-slate-500 dark:text-slate-400 font-medium text-sm tracking-tight hover:bg-slate-200/50 transition-colors">
+                    Add Inbound
+                </button>
+<button class="px-8 py-4 text-slate-500 dark:text-slate-400 font-medium text-sm tracking-tight hover:bg-slate-200/50 transition-colors">
+                    Add Outbound
+                </button>
+</div>
+<!-- Bento Grid - Filter & Main Table -->
+<div class="grid grid-cols-12 gap-6 items-start">
+<!-- Filters Sidebar (Asymmetric Layout) -->
+<aside class="col-span-12 lg:col-span-3 space-y-6">
+<div class="bg-surface-container-low p-6 rounded-xl space-y-6">
+<div class="headline text-sm font-bold text-[#003d4d] flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="filter_list">filter_list</span>
+                            Ledger Filters
+                        </div>
+<div class="space-y-4">
+<div>
+<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">Operation Type</label>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-primary-container text-white text-[11px] font-bold rounded-full cursor-pointer">All Movements</span>
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant text-[11px] font-bold rounded-full cursor-pointer hover:bg-secondary-container hover:text-on-secondary-container transition-colors">Inbound</span>
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant text-[11px] font-bold rounded-full cursor-pointer hover:bg-surface-dim transition-colors">Outbound</span>
+</div>
+</div>
+<div>
+<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">Category</label>
+<select class="w-full bg-surface border-none rounded-lg text-sm p-2 focus:ring-2 focus:ring-primary shadow-inner">
+<option>Organic Solvents</option>
+<option>Heavy Metals</option>
+<option>Reagents</option>
+<option>Consumables</option>
+</select>
+</div>
+<div>
+<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">Date Range</label>
+<div class="space-y-2">
+<input class="w-full bg-surface border-none rounded-lg text-sm p-2 focus:ring-2 focus:ring-primary shadow-inner" type="date"/>
+<input class="w-full bg-surface border-none rounded-lg text-sm p-2 focus:ring-2 focus:ring-primary shadow-inner" type="date"/>
+</div>
+</div>
+</div>
+<button class="w-full py-2 bg-surface-container-highest text-on-surface font-bold text-xs rounded-lg hover:bg-surface-dim transition-colors">
+                            Reset All Filters
+                        </button>
+</div>
+<div class="bg-gradient-to-br from-[#003d4d] to-[#002631] p-6 rounded-xl text-white shadow-lg overflow-hidden relative group">
+<div class="relative z-10">
+<div class="text-[10px] font-bold text-primary-fixed-dim uppercase tracking-widest mb-2">System Alert</div>
+<h4 class="text-sm font-bold mb-2">Low Stock Threshold</h4>
+<p class="text-xs text-primary-fixed leading-relaxed">Ethanol 99% reserves are below 15% safety limit. Schedule inbound reorder immediately.</p>
+</div>
+<span class="material-symbols-outlined absolute -bottom-4 -right-4 text-7xl text-white/5 group-hover:scale-110 transition-transform duration-500" data-icon="warning">warning</span>
+</div>
+</aside>
+<!-- Ledger Table (Administrative Precision) -->
+<div class="col-span-12 lg:col-span-9 bg-surface-container-lowest rounded-xl shadow-[0_12px_40px_-10px_rgba(25,28,29,0.06)] overflow-hidden">
+<div class="p-6 border-b border-surface-container-low flex justify-between items-center">
+<h3 class="font-bold text-on-surface headline">Audit Log: Movement Records</h3>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-surface-container-low rounded-lg transition-colors">
+<span class="material-symbols-outlined text-slate-500" data-icon="download">download</span>
+</button>
+<button class="p-2 hover:bg-surface-container-low rounded-lg transition-colors">
+<span class="material-symbols-outlined text-slate-500" data-icon="print">print</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Chemical Name</th>
+<th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Quantity</th>
+<th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Type</th>
+<th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Purpose/Usage</th>
+<th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Handler</th>
+<th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Date/Time</th>
+</tr>
+</thead>
+<tbody class="text-sm">
+<!-- Row 1: Inbound -->
+<tr class="border-b border-surface-container-low hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="font-bold text-on-surface">Ethanol 99.9% AR</div>
+<div class="text-[10px] text-slate-400">LOT: ETH-2023-4412</div>
+</td>
+<td class="px-6 py-4 text-right font-bold text-secondary">+250.0 L</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-block px-2 py-0.5 bg-secondary-container text-on-secondary-container text-[10px] font-black rounded-full uppercase tracking-tighter">In</span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant italic">Bulk Replenishment</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-[10px] font-bold">JW</div>
+<span>James Wu</span>
+</div>
+</td>
+<td class="px-6 py-4 text-slate-500 font-mono text-xs">2023-10-24 09:14</td>
+</tr>
+<!-- Row 2: Outbound -->
+<tr class="border-b border-surface-container-low hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="font-bold text-on-surface">Hydrochloric Acid 37%</div>
+<div class="text-[10px] text-slate-400">LOT: HCL-110-B</div>
+</td>
+<td class="px-6 py-4 text-right font-bold text-slate-500">-2.5 L</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-block px-2 py-0.5 bg-surface-container-highest text-slate-600 text-[10px] font-black rounded-full uppercase tracking-tighter">Out</span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant italic">Study #882 Titration</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-[10px] font-bold">AT</div>
+<span>Aris Thorne</span>
+</div>
+</td>
+<td class="px-6 py-4 text-slate-500 font-mono text-xs">2023-10-24 11:30</td>
+</tr>
+<!-- Row 3: Outbound -->
+<tr class="border-b border-surface-container-low hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="font-bold text-on-surface">Silver Nitrate Crystal</div>
+<div class="text-[10px] text-slate-400">LOT: AGNO3-X92</div>
+</td>
+<td class="px-6 py-4 text-right font-bold text-slate-500">-50.0 g</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-block px-2 py-0.5 bg-surface-container-highest text-slate-600 text-[10px] font-black rounded-full uppercase tracking-tighter">Out</span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant italic">Analytical Testing</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-[10px] font-bold">MK</div>
+<span>M. Kowalski</span>
+</div>
+</td>
+<td class="px-6 py-4 text-slate-500 font-mono text-xs">2023-10-24 14:05</td>
+</tr>
+<!-- Row 4: Inbound -->
+<tr class="border-b border-surface-container-low hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="font-bold text-on-surface">DCM (HPLC Grade)</div>
+<div class="text-[10px] text-slate-400">LOT: DCM-P-001</div>
+</td>
+<td class="px-6 py-4 text-right font-bold text-secondary">+10.0 L</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-block px-2 py-0.5 bg-secondary-container text-on-secondary-container text-[10px] font-black rounded-full uppercase tracking-tighter">In</span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant italic">Vendor Delivery</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-[10px] font-bold">JW</div>
+<span>James Wu</span>
+</div>
+</td>
+<td class="px-6 py-4 text-slate-500 font-mono text-xs">2023-10-23 16:45</td>
+</tr>
+<!-- Row 5: Outbound -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="font-bold text-on-surface">Buffer Solution pH 4</div>
+<div class="text-[10px] text-slate-400">LOT: BPH4-Z11</div>
+</td>
+<td class="px-6 py-4 text-right font-bold text-slate-500">-500.0 mL</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-block px-2 py-0.5 bg-surface-container-highest text-slate-600 text-[10px] font-black rounded-full uppercase tracking-tighter">Out</span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant italic">Instrument Calib</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-[10px] font-bold">AT</div>
+<span>Aris Thorne</span>
+</div>
+</td>
+<td class="px-6 py-4 text-slate-500 font-mono text-xs">2023-10-23 08:22</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 bg-surface-container-low flex justify-between items-center text-xs text-slate-500 font-medium">
+<div>Showing 1 - 5 of 1,282 records</div>
+<div class="flex gap-1">
+<button class="px-3 py-1 bg-white border border-surface-container-high rounded-md hover:bg-slate-50">Previous</button>
+<button class="px-3 py-1 bg-white border border-surface-container-high rounded-md hover:bg-slate-50">Next</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Floating Telemetry Strip (Success State) -->
+<div class="h-1 w-full bg-secondary fixed top-0 left-0 z-20"></div>
+</main>
+<!-- Contextual "Add Record" Modal (Glass Drawer Pattern) -->
+<div class="fixed inset-y-0 right-0 w-[400px] glass-drawer shadow-2xl border-l border-white/20 z-50 transform translate-x-full lg:translate-x-0 hidden lg:flex flex-col p-8">
+<div class="flex justify-between items-center mb-10">
+<h3 class="headline text-xl font-bold text-[#003d4d]">Movement Quick-Entry</h3>
+<button class="text-slate-400 hover:text-error transition-colors">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<div class="space-y-8 flex-1 overflow-y-auto">
+<div class="space-y-4">
+<div>
+<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">Operation Type</label>
+<div class="grid grid-cols-2 gap-2">
+<button class="py-3 border-2 border-secondary bg-secondary/5 text-secondary rounded-lg font-bold text-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" data-icon="arrow_downward">arrow_downward</span>
+                            Inbound
+                        </button>
+<button class="py-3 border border-surface-container-high text-slate-400 rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-white transition-colors">
+<span class="material-symbols-outlined" data-icon="arrow_upward">arrow_upward</span>
+                            Outbound
+                        </button>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Search Material</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" data-icon="search">search</span>
+<input class="w-full bg-white border border-surface-container-high rounded-lg pl-9 p-3 text-sm focus:ring-2 focus:ring-primary outline-none" placeholder="CAS Number or Name..." type="text"/>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-2">
+<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Quantity</label>
+<input class="w-full bg-white border border-surface-container-high rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary outline-none" placeholder="0.00" type="number"/>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Unit</label>
+<select class="w-full bg-white border border-surface-container-high rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary outline-none">
+<option>Liters (L)</option>
+<option>Grams (g)</option>
+<option>Kilograms (kg)</option>
+<option>Milliliters (mL)</option>
+</select>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Purpose / Study Ref</label>
+<textarea class="w-full bg-white border border-surface-container-high rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary outline-none resize-none" placeholder="Enter reason for movement..." rows="3"></textarea>
+</div>
+</div>
+<div class="pt-6 border-t border-white/40">
+<button class="w-full py-4 bg-gradient-to-r from-[#003d4d] to-[#006b59] text-white rounded-lg font-bold text-sm shadow-xl active:scale-95 transition-all">
+                    Finalize Entry &amp; Update Inventory
+                </button>
+</div>
+</div>
+</div>
+</body></html>

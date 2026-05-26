@@ -1,0 +1,19 @@
+{
+  "name": "import_data_basic",
+  "description": "Basic data import",
+  "seed_data": {},
+  "request": {
+    "method": "POST",
+    "path": "/api/imports",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "source": "csv",
+      "data": [
+        {"name": "Item 1", "quantity": 10},
+        {"name": "Item 2", "quantity": 20}
+      ]
+    }
+  }
+}

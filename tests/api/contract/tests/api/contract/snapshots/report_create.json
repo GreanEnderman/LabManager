@@ -1,0 +1,7 @@
+{
+  "status_code": 201,
+  "required_fields": [
+    "id",
+    "status"
+  ]
+}

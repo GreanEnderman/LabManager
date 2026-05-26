@@ -1,0 +1,31 @@
+{
+  "name": "create_approval_basic",
+  "description": "Basic approval workflow creation",
+  "seed_data": {
+    "users": [
+      {
+        "id": "test-user-1",
+        "name": "Test User",
+        "email": "test@example.com"
+      },
+      {
+        "id": "test-approver-1",
+        "name": "Test Approver",
+        "email": "approver@example.com"
+      }
+    ]
+  },
+  "request": {
+    "method": "POST",
+    "path": "/api/approvals",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "title": "Test Approval",
+      "requester": "test-user-1",
+      "approver": "test-approver-1",
+      "type": "budget"
+    }
+  }
+}

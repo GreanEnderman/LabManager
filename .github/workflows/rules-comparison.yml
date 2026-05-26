@@ -1,0 +1,87 @@
+name: Rules Engine Comparison
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'python_backend/app/rules/**'
+      - 'python_backend/app/gateway/**'
+      - 'backend/**'
+      - 'tests/comparison/**'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'python_backend/app/rules/**'
+      - 'python_backend/app/gateway/**'
+      - 'backend/**'
+      - 'tests/comparison/**'
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install TS backend dependencies
+        run: |
+          cd backend
+          npm install
+
+      - name: Start TS backend
+        run: |
+          cd backend
+          npm start &
+          sleep 10
+
+      - name: Install Python backend dependencies
+        run: |
+          cd python_backend
+          pip install -e .
+
+      - name: Start Python backend
+        run: |
+          cd python_backend
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          sleep 10
+
+      - name: Run comparison tests
+        run: |
+          cd tests/comparison
+          python run_comparison.py
+
+      - name: Upload comparison report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: comparison-report
+          path: tests/comparison/report.txt
