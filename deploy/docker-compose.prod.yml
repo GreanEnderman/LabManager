@@ -5,7 +5,7 @@ services:
       api:
         condition: service_healthy
     ports:
-      - "80:80"
+      - "8004:80"
       # Terminate TLS at a host-level proxy/load balancer, or add a cert volume and 443 server block.
       # - "443:443"
     volumes:
@@ -70,7 +70,7 @@ services:
     environment:
       POSTGRES_DB: labmanager
       POSTGRES_USER: labmanager
-      POSTGRES_PASSWORD: change-me
+      POSTGRES_PASSWORD: labpwd
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
