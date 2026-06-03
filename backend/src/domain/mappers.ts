@@ -39,7 +39,21 @@ export function toReportDTO(report: AIReportRecord): AIReportDTO {
 }
 
 export function toChemicalInventoryDTO(record: ChemicalInventoryRecord): ChemicalInventoryDTO {
-  return { ...record }
+  return {
+    id: record.id,
+    name: record.name,
+    casNumber: record.casNumber,
+    category: record.category,
+    spec: record.spec,
+    currentQuantity: record.currentQuantity,
+    threshold: record.threshold,
+    status: record.status,
+    ownerName: record.ownerName,
+    updatedAt: record.updatedAt,
+    imageDataUrl: record.imageDataUrl,
+    remark: record.remark,
+    metadata: record.metadata,
+  }
 }
 
 export function toEquipmentAssetDTO(record: EquipmentAssetRecord): EquipmentAssetDTO {

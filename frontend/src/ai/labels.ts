@@ -1,8 +1,8 @@
 import type { AIApprovalStatus, AITaskStatus } from './types'
 
 export const taskStatusLabel: Record<AITaskStatus, string> = {
-  open: '待处理',
-  in_progress: '处理中',
+  open: '未批准',
+  in_progress: '未批准',
   pending_approval: '待审批',
   done: '已完成',
   closed: '已关闭',

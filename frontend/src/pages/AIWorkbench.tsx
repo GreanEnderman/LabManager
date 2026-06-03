@@ -6,6 +6,7 @@ import { useAI } from '../ai/AIStateLive'
 import { useAISettingsRuntime } from '../ai/AISettingsRuntimeLive'
 import { getAIOverviewStats, getTaskSLAView } from '../ai/selectors'
 import { aiAppClient } from '../runtime/aiAppFacadeAsync'
+import { formatLocalDateTime } from '../runtime/dateTime'
 import type { CompletionReportInput } from '../runtime/aiGateway'
 import type {
   AIActivityLog,
@@ -38,8 +39,8 @@ const assignees: AIAssignee[] = [
 ]
 
 const taskStatusMeta: Record<AITaskStatus, { label: string; className: string }> = {
-  open: { label: '\u5f85\u5904\u7406', className: 'bg-surface-container text-on-surface' },
-  in_progress: { label: '\u5904\u7406\u4e2d', className: 'bg-primary-container text-on-primary-container' },
+  open: { label: '未批准', className: 'bg-error-container text-error' },
+  in_progress: { label: '未批准', className: 'bg-error-container text-error' },
   pending_approval: { label: '\u5f85\u5ba1\u6279', className: 'bg-tertiary-container text-on-tertiary-container' },
   done: { label: '\u5df2\u5b8c\u6210', className: 'bg-secondary-container text-on-secondary-container' },
   closed: { label: '\u5df2\u5173\u95ed', className: 'bg-surface-container-low text-on-surface-variant' },
@@ -209,7 +210,7 @@ function getWorkbenchSummary(
       return {
         title: '\u4efb\u52a1\u63a8\u8fdb\u6982\u51b5',
         cards: [
-          { label: '\u5f85\u5904\u7406', value: `${overview.openTaskCount}`, tone: 'primary' as const },
+          { label: '未批准', value: `${overview.openTaskCount}`, tone: 'primary' as const },
           { label: '\u5df2\u8d85\u65f6', value: `${overview.overdueTaskCount}`, tone: 'plain' as const },
           { label: '\u5df2\u5347\u7ea7', value: `${overview.escalatedTaskCount}`, tone: 'plain' as const },
         ],
@@ -245,7 +246,7 @@ function getWorkbenchSummary(
       return {
         title: '\u4efb\u52a1\u63a8\u8fdb\u6982\u51b5',
         cards: [
-          { label: '\u5f85\u5904\u7406', value: `${overview.openTaskCount}`, tone: 'primary' as const },
+          { label: '未批准', value: `${overview.openTaskCount}`, tone: 'primary' as const },
           { label: '\u8d85\u65f6\u4efb\u52a1', value: `${overview.overdueTaskCount}`, tone: 'plain' as const },
           { label: '\u5df2\u5347\u7ea7', value: `${overview.escalatedTaskCount}`, tone: 'plain' as const },
         ],
@@ -267,7 +268,6 @@ interface TasksTabProps {
   activityLogs: AIActivityLog[]
   canManageTasks: boolean
   assignTask: (taskId: string, assignee: AIAssignee) => void
-  updateTaskStatus: (taskId: string, status: AITaskStatus) => void
   prepareAutoPurchase: (taskId: string) => void
   getTaskSLAStatusLabel: (task: AITask) => string
 }
@@ -316,7 +316,6 @@ export default function AIWorkbench() {
     reports,
     activityLogs,
     assignTask,
-    updateTaskStatus,
     prepareAutoPurchase,
     confirmCompletionReport,
     resolveApproval,
@@ -392,7 +391,7 @@ export default function AIWorkbench() {
 
       <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-7">
         <StatCard title={'\u4eca\u65e5\u4e8b\u4ef6'} value={String(overview.eventCount)} icon="crisis_alert" />
-        <StatCard title={'\u5f85\u5904\u7406\u4efb\u52a1'} value={String(overview.openTaskCount)} icon="task" />
+        <StatCard title="未批准任务" value={String(overview.openTaskCount)} icon="task" />
         <StatCard title={'\u8d85\u65f6\u4efb\u52a1'} value={String(overview.overdueTaskCount)} icon="schedule" />
         <StatCard title={'\u5df2\u5347\u7ea7'} value={String(overview.escalatedTaskCount)} icon="warning" />
         <StatCard title={'\u5f85\u5ba1\u6279'} value={String(overview.pendingApprovalCount)} icon="approval" />
@@ -460,7 +459,6 @@ export default function AIWorkbench() {
           activityLogs={activityLogs}
           canManageTasks={canManageTasks}
           assignTask={assignTask}
-          updateTaskStatus={updateTaskStatus}
           prepareAutoPurchase={prepareAutoPurchase}
           getTaskSLAStatusLabel={getTaskSLAStatusLabel}
         />
@@ -506,7 +504,6 @@ function TasksTab({
   activityLogs,
   canManageTasks,
   assignTask,
-  updateTaskStatus,
   prepareAutoPurchase,
   getTaskSLAStatusLabel,
 }: TasksTabProps) {
@@ -537,8 +534,7 @@ function TasksTab({
 
   const filters: Array<{ value: 'all' | AITaskStatus | AISLAStatus; label: string }> = [
     { value: 'all', label: '全部' },
-    { value: 'open', label: '待处理' },
-    { value: 'in_progress', label: '处理中' },
+    { value: 'open', label: '未批准' },
     { value: 'pending_approval', label: '待审批' },
     { value: 'overdue', label: '已超时' },
     { value: 'escalated', label: '已升级' },
@@ -553,7 +549,7 @@ function TasksTab({
           </div>
           <div className="flex flex-wrap gap-3">
             <button onClick={() => setStatusFilter('open')} className="rounded-xl bg-primary px-4 py-3 text-sm text-on-primary">
-              查看待处理
+              查看未批准
             </button>
             <button
               onClick={() => setStatusFilter('overdue')}
@@ -635,32 +631,13 @@ function TasksTab({
                 <SLAPill task={selectedTask} getTaskSLAStatusLabel={getTaskSLAStatusLabel} />
               </div>
 
-              <div className="mb-4 flex flex-wrap gap-3">
-                {canManageTasks ? (
-                  <>
-                    <button
-                      onClick={() => updateTaskStatus(selectedTask.id, 'in_progress')}
-                      className="rounded-xl bg-primary px-4 py-3 text-sm text-on-primary"
-                    >
-                      开始处理
-                    </button>
-                    <button
-                      onClick={() => updateTaskStatus(selectedTask.id, 'closed')}
-                      className="rounded-xl bg-surface-container-high px-4 py-3 text-sm text-on-surface"
-                    >
-                      关闭任务
-                    </button>
-                  </>
-                ) : null}
-              </div>
-
               <div className="mb-4 grid gap-3 md:grid-cols-2">
                 <InfoCard label="来源对象" value={selectedTask.sourceName} />
                 <InfoCard label="风险等级" value={getRiskLevelLabel(selectedTask.riskLevel)} />
                 <InfoCard label="优先级" value={getPriorityLabel(selectedTask.priority)} />
-                <InfoCard label="截止时间" value={selectedTask.dueAt} />
+                <InfoCard label="截止时间" value={formatLocalDateTime(selectedTask.dueAt)} />
                 <InfoCard label="任务类型" value={taskTypeLabel[selectedTask.type]} />
-                <InfoCard label="创建时间" value={selectedTask.createdAt} />
+                <InfoCard label="创建时间" value={formatLocalDateTime(selectedTask.createdAt)} />
               </div>
 
               {isChemicalPurchaseTask(selectedTask) ? (
@@ -759,7 +736,7 @@ function TasksTab({
                   <div key={log.id} className="rounded-xl border border-outline-variant bg-surface-container-low p-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="font-medium text-on-surface">{log.action}</p>
-                      <span className="text-xs text-on-surface-variant">{log.timestamp}</span>
+                      <span className="text-xs text-on-surface-variant">{formatLocalDateTime(log.timestamp)}</span>
                     </div>
                     <p className="mt-2 text-sm text-on-surface-variant">{translateTaskText(log.detail)}</p>
                   </div>
@@ -870,7 +847,7 @@ function ApprovalsTab({
             <div className="mb-4 grid grid-cols-2 gap-3 text-sm">
               <InfoCard label={'\u5173\u8054\u4efb\u52a1'} value={selectedApprovalTask ? translateTaskText(selectedApprovalTask.title) : '-'} />
               <InfoCard label={'\u98ce\u9669\u7b49\u7ea7'} value={getRiskLevelLabel(selectedApproval.riskLevel)} />
-              <InfoCard label={'\u53d1\u8d77\u65f6\u95f4'} value={selectedApproval.createdAt} />
+              <InfoCard label={'\u53d1\u8d77\u65f6\u95f4'} value={formatLocalDateTime(selectedApproval.createdAt)} />
               <InfoCard label={'\u4efb\u52a1\u72b6\u6001'} value={selectedApprovalTask ? taskStatusMeta[selectedApprovalTask.status].label : '-'} />
             </div>
 
@@ -1058,7 +1035,7 @@ function ApprovalsTab({
                   <div key={log.id} className="rounded-xl bg-surface-container-low p-3 text-sm">
                     <div className="flex items-center justify-between gap-3">
                       <p className="font-medium text-on-surface">{log.action}</p>
-                      <span className="text-xs text-on-surface-variant">{log.timestamp}</span>
+                      <span className="text-xs text-on-surface-variant">{formatLocalDateTime(log.timestamp)}</span>
                     </div>
                     <p className="mt-1 text-on-surface-variant">{translateTaskText(log.detail)}</p>
                   </div>
@@ -1155,7 +1132,7 @@ function ReportsTab({ reports, generateReport, deleteReport, sendReport, reportD
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-medium text-on-surface">{report.title}</p>
-                    <p className="mt-1 text-sm text-on-surface-variant">{report.createdAt}</p>
+                    <p className="mt-1 text-sm text-on-surface-variant">{formatLocalDateTime(report.createdAt)}</p>
                   </div>
                   <ReportTypePill type={report.type} />
                 </div>
@@ -1171,7 +1148,7 @@ function ReportsTab({ reports, generateReport, deleteReport, sendReport, reportD
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div>
                   <h3 className="text-lg font-semibold text-on-surface">{selectedReport.title}</h3>
-                  <p className="mt-1 text-sm text-on-surface-variant">{selectedReport.createdAt}</p>
+                  <p className="mt-1 text-sm text-on-surface-variant">{formatLocalDateTime(selectedReport.createdAt)}</p>
                 </div>
                 <ReportTypePill type={selectedReport.type} />
               </div>
@@ -1253,7 +1230,7 @@ function ReportsTab({ reports, generateReport, deleteReport, sendReport, reportD
                             {record.status === 'success' ? '成功' : '失败'}
                           </span>
                         </div>
-                        <p className="mt-1 text-on-surface-variant">{record.sentAt}</p>
+                        <p className="mt-1 text-on-surface-variant">{formatLocalDateTime(record.sentAt)}</p>
                         {record.errorMessage ? <p className="mt-1 text-error">{record.errorMessage}</p> : null}
                       </div>
                     ))

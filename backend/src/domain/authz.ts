@@ -47,6 +47,7 @@ const MANAGER_CAPABILITIES: AppCapability[] = [
   'chemicals:read',
   'equipment:read',
   'imports:read',
+  'imports:create',
   'alerts:read',
   'tasks:read',
   'tasks:write',
@@ -64,6 +65,8 @@ const MANAGER_CAPABILITIES: AppCapability[] = [
 const OPERATOR_CAPABILITIES: AppCapability[] = [
   'chemicals:read',
   'equipment:read',
+  'imports:read',
+  'imports:create',
   'alerts:read',
   'tasks:read',
   'tasks:write',

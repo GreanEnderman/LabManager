@@ -17,9 +17,11 @@ export interface ChemicalImportRecord {
   category: string
   spec: string
   currentQuantity: number
+  batchNumber: string
+  openedAt: string
+  expiryDate: string
   threshold: number
   status: string
-  labName: string
   ownerName: string
   updatedAt: string
   imageDataUrl: string

@@ -1,6 +1,8 @@
 ﻿import { useEffect, useState } from 'react'
 import { dashboardApi, type DashboardOverview as DashboardData } from '../api/dashboard'
 
+import { formatLocalDateTime } from '../runtime/dateTime'
+
 export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [lowStockItems, setLowStockItems] = useState<Array<{ id: string; name: string; totalQuantity: number; image?: string | null }>>([])
@@ -132,7 +134,7 @@ export default function Dashboard() {
       </div>
 
       <div className="mt-6 text-sm text-on-surface-variant">
-        数据来源：实时从后端 API 获取 | 最后更新：{new Date(dashboardData.timestamp).toLocaleString('zh-CN')}
+        数据来源：实时从后端 API 获取 | 最后更新：{formatLocalDateTime(dashboardData.timestamp)}
       </div>
     </div>
   )

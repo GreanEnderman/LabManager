@@ -175,7 +175,6 @@ export interface ChemicalInventoryRecord {
   currentQuantity: number
   threshold: number
   status: string
-  labName: string | null
   ownerName: string | null
   updatedAt: string
   imageDataUrl: string | null

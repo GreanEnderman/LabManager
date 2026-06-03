@@ -11,6 +11,7 @@ import DataImportCenter from './pages/DataImportCenter'
 import AIReportPrint from './pages/AIReportPrint'
 import WorkflowMonitor from './pages/WorkflowMonitor'
 import LoginPage from './pages/LoginPage'
+import NotificationCenter from './pages/NotificationCenter'
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
         <Route path="maintenance" element={<Navigate to="/equipment" replace />} />
         <Route path="data-import" element={<DataImportCenter />} />
         <Route path="alerts" element={<AlertCenterLive />} />
+        <Route path="notifications" element={<NotificationCenter />} />
         <Route path="ai-workbench" element={<AIWorkbench />} />
         <Route path="workflow-monitor" element={<WorkflowMonitor />} />
         <Route path="ai-dashboard" element={<Navigate to="/ai-workbench" replace />} />

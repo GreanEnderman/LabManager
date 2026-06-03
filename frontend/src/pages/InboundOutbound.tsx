@@ -1,26 +1,37 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
+import { useImports } from '../imports/ImportContextLive'
 import { aiAppClient } from '../runtime/aiAppFacadeAsync'
+import { formatLocalDateTime } from '../runtime/dateTime'
+
+interface TransactionRecord {
+  id: string
+  date: string
+  name: string
+  type: string
+  quantity: string
+  unit: string
+  operator: string
+  reason: string
+}
+
+function normalizeMovementType(type: string) {
+  if (type === 'inbound' || type === '鍏ュ簱') return '入库'
+  if (type === 'outbound' || type === '鍑哄簱') return '出库'
+  return type
+}
 
 export default function InboundOutbound() {
+  const { movements } = useImports()
   const [keyword, setKeyword] = useState('')
   const [movementType, setMovementType] = useState('全部类型')
-  const [transactions, setTransactions] = useState<Array<{
-    id: string
-    date: string
-    name: string
-    type: string
-    quantity: string
-    unit: string
-    operator: string
-    reason: string
-  }>>([])
+  const [remoteTransactions, setRemoteTransactions] = useState<TransactionRecord[]>([])
   const [loading, setLoading] = useState(true)
 
   async function loadTransactions() {
     setLoading(true)
     try {
       const data = await aiAppClient.listInventoryTransactions()
-      setTransactions(data)
+      setRemoteTransactions(data)
     } catch (error) {
       console.error('Failed to load transactions:', error)
     } finally {
@@ -31,6 +42,28 @@ export default function InboundOutbound() {
   useEffect(() => {
     loadTransactions()
   }, [])
+
+  const importedTransactions = useMemo<TransactionRecord[]>(
+    () =>
+      movements.map((record) => ({
+        id: record.id,
+        date: record.date,
+        name: record.name,
+        type: normalizeMovementType(record.type),
+        quantity: record.quantity,
+        unit: '',
+        operator: record.operator,
+        reason: record.reason,
+      })),
+    [movements],
+  )
+
+  const transactions = useMemo(() => {
+    const transactionMap = new Map<string, TransactionRecord>()
+    remoteTransactions.forEach((record) => transactionMap.set(record.id, { ...record, type: normalizeMovementType(record.type) }))
+    importedTransactions.forEach((record) => transactionMap.set(record.id, record))
+    return [...transactionMap.values()].sort((left, right) => right.date.localeCompare(left.date))
+  }, [importedTransactions, remoteTransactions])
 
   const filteredRecords = useMemo(
     () =>
@@ -96,7 +129,7 @@ export default function InboundOutbound() {
                 const isInbound = record.type === '入库'
                 return (
                   <tr key={record.id} className="transition-colors hover:bg-surface-container-low">
-                    <td className="px-6 py-4 text-on-surface-variant">{record.date || '-'}</td>
+                    <td className="px-6 py-4 text-on-surface-variant">{formatLocalDateTime(record.date)}</td>
                     <td className="px-6 py-4 text-on-surface">{record.name}</td>
                     <td className="px-6 py-4"><span className={`rounded-full px-3 py-1 text-sm ${isInbound ? 'bg-secondary-container text-on-secondary-container' : 'bg-tertiary-container text-on-tertiary-container'}`}>{record.type}</span></td>
                     <td className="px-6 py-4 font-medium text-on-surface">{record.quantity} {record.unit}</td>

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useAI } from '../ai/AIStateLive'
 import { taskStatusClass, taskStatusLabel } from '../ai/labels'
 import { getAIOverviewStats, getHighPriorityTasks, getPendingApprovals, getRecentActivityLogs } from '../ai/selectors'
+import { formatLocalDateTime } from '../runtime/dateTime'
 
 export default function AIOperationsDashboard() {
   const { events, tasks, approvals, reports, activityLogs, generateReport, createApprovalForTask } = useAI()
@@ -31,7 +32,7 @@ export default function AIOperationsDashboard() {
 
       <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard title="今日发现问题" value={String(overview.eventCount)} icon="crisis_alert" />
-        <StatCard title="待处理任务" value={String(overview.openTaskCount)} icon="task" />
+        <StatCard title="未批准任务" value={String(overview.openTaskCount)} icon="task" />
         <StatCard title="待审批事项" value={String(overview.pendingApprovalCount)} icon="approval" />
         <StatCard title="超时任务" value={String(overview.overdueTaskCount)} icon="timer" />
       </div>
@@ -70,7 +71,7 @@ export default function AIOperationsDashboard() {
 
         <section className="rounded-lg border border-outline-variant bg-surface p-6">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-on-surface">待处理队列</h2>
+            <h2 className="text-xl font-semibold text-on-surface">未批准队列</h2>
             <Link to="/ai-tasks" className="text-sm text-primary">
               查看全部
             </Link>
@@ -124,7 +125,7 @@ export default function AIOperationsDashboard() {
               <div key={log.id} className="rounded-lg bg-surface-container-low p-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="font-medium text-on-surface">{log.action}</p>
-                  <span className="text-xs text-on-surface-variant">{log.timestamp}</span>
+                  <span className="text-xs text-on-surface-variant">{formatLocalDateTime(log.timestamp)}</span>
                 </div>
                 <p className="mt-1 text-sm text-on-surface-variant">{log.detail}</p>
               </div>

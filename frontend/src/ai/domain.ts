@@ -144,7 +144,7 @@ export function buildReport(state: AIState, type: AIReportType): AIReport {
     highlights:
       type === 'risk_summary'
         ? [`风险事件 ${state.events.length} 条`, `已升级任务 ${escalatedTaskCount} 个`, `待审批事项 ${pendingApprovalCount} 项`]
-        : [`风险事件 ${state.events.length} 条`, `进行中任务 ${inProgressTaskCount} 个`, `待审批事项 ${pendingApprovalCount} 项`],
+        : [`风险事件 ${state.events.length} 条`, `未批准任务 ${inProgressTaskCount} 个`, `待审批事项 ${pendingApprovalCount} 项`],
     sections:
       type === 'daily'
         ? [

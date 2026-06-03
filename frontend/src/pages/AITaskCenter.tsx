@@ -9,6 +9,7 @@ import {
   taskStatusClass,
   taskStatusLabel,
 } from '../ai/labels'
+import { formatLocalDateTime } from '../runtime/dateTime'
 import type { AIAssignee, AITaskStatus } from '../ai/types'
 
 const assignees: AIAssignee[] = ['库管', '采购', '设备管理员', '实验室管理员', 'AI 员工']
@@ -67,8 +68,7 @@ export default function AITaskCenter() {
             className="rounded-lg border border-outline-variant bg-surface-container-low px-4 py-2"
           >
             <option value="全部状态">全部状态</option>
-            <option value="open">待处理</option>
-            <option value="in_progress">处理中</option>
+            <option value="open">未批准</option>
             <option value="pending_approval">待审批</option>
             <option value="done">已完成</option>
             <option value="closed">已关闭</option>
@@ -81,10 +81,7 @@ export default function AITaskCenter() {
           <div className="mb-4 flex items-center gap-3 border-b border-outline-variant pb-3">
             <button className="rounded-lg bg-primary px-4 py-2 text-sm text-on-primary">全部</button>
             <button className="rounded-lg px-4 py-2 text-sm text-on-surface-variant hover:bg-surface-container-low">
-              待处理
-            </button>
-            <button className="rounded-lg px-4 py-2 text-sm text-on-surface-variant hover:bg-surface-container-low">
-              处理中
+              未批准
             </button>
           </div>
           <div className="space-y-3">
@@ -104,7 +101,7 @@ export default function AITaskCenter() {
                     {taskStatusLabel[task.status]}
                   </span>
                 </div>
-                <p className="mb-2 text-sm text-on-surface-variant">{task.createdAt}</p>
+                <p className="mb-2 text-sm text-on-surface-variant">{formatLocalDateTime(task.createdAt)}</p>
                 <p className="text-sm text-on-surface-variant">{task.summary}</p>
               </button>
             ))}
@@ -127,10 +124,10 @@ export default function AITaskCenter() {
               <div className="mb-4 grid grid-cols-2 gap-3 text-sm">
                 <InfoCard label="来源对象" value={selectedTask.sourceName} />
                 <InfoCard label="风险等级" value={selectedTask.riskLevel} />
-                <InfoCard label="截止时间" value={selectedTask.dueAt} />
+                <InfoCard label="截止时间" value={formatLocalDateTime(selectedTask.dueAt)} />
                 <InfoCard label="当前责任人" value={selectedTask.assignee} />
                 <InfoCard label="任务类型" value={selectedTask.type} />
-                <InfoCard label="创建时间" value={selectedTask.createdAt} />
+                <InfoCard label="创建时间" value={formatLocalDateTime(selectedTask.createdAt)} />
                 <InfoCard label="来源类型" value={selectedTask.sourceType} />
                 <InfoCard label="审批要求" value={selectedTask.requiresApproval ? '需要审批' : '无需审批'} />
               </div>
@@ -141,7 +138,7 @@ export default function AITaskCenter() {
                   <p className="text-sm text-on-surface">{relatedEvent.title}</p>
                   <p className="mt-1 text-sm text-on-surface-variant">{relatedEvent.summary}</p>
                   <p className="mt-2 text-xs text-on-surface-variant">
-                    事件时间：{relatedEvent.createdAt} · 优先级：{relatedEvent.priority}
+                    事件时间：{formatLocalDateTime(relatedEvent.createdAt)} · 优先级：{relatedEvent.priority}
                   </p>
                 </div>
               )}
@@ -184,12 +181,6 @@ export default function AITaskCenter() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <button
-                      onClick={() => updateTaskStatus(selectedTask.id, 'in_progress')}
-                      className="rounded-lg bg-primary px-4 py-2 text-sm text-on-primary"
-                    >
-                      开始处理
-                    </button>
-                    <button
                       onClick={() => updateTaskStatus(selectedTask.id, 'done')}
                       className="rounded-lg bg-secondary-container px-4 py-2 text-sm text-on-secondary-container"
                     >
@@ -207,12 +198,6 @@ export default function AITaskCenter() {
                         当前角色不可发起审批
                       </div>
                     )}
-                    <button
-                      onClick={() => updateTaskStatus(selectedTask.id, 'closed')}
-                      className="rounded-lg bg-surface-container-high px-4 py-2 text-sm text-on-surface"
-                    >
-                      关闭任务
-                    </button>
                   </div>
                 </div>
               ) : (
@@ -240,7 +225,7 @@ export default function AITaskCenter() {
                         </div>
                         <p className="mt-1 text-on-surface-variant">{approval.reason}</p>
                         <p className="mt-2 text-xs text-on-surface-variant">
-                          发起时间：{approval.createdAt}
+                          发起时间：{formatLocalDateTime(approval.createdAt)}
                           {approval.comment ? ` · 审批意见：${approval.comment}` : ''}
                         </p>
                       </div>
@@ -260,7 +245,7 @@ export default function AITaskCenter() {
                     <div key={log.id} className="rounded-lg bg-surface-container-low p-3 text-sm">
                       <div className="flex items-center justify-between gap-3">
                         <p className="font-medium text-on-surface">{log.action}</p>
-                        <span className="text-xs text-on-surface-variant">{log.timestamp}</span>
+                        <span className="text-xs text-on-surface-variant">{formatLocalDateTime(log.timestamp)}</span>
                       </div>
                       <p className="mt-1 text-on-surface-variant">{log.detail}</p>
                       <p className="mt-1 text-xs text-on-surface-variant">操作方：{log.actorName ?? 'AI 员工'}</p>

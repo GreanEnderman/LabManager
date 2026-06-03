@@ -332,8 +332,8 @@ function StrategyTab({
       </div>
 
       <ConfigSection title="SLA 策略">
-        <NumberField label="Open 最大停留时长（分钟）" value={sla.openMinutes} disabled={!canManageSettings} onChange={(value) => updateNumberSetting('sla', 'openMinutes', value)} />
-        <NumberField label="处理中最大停留时长（分钟）" value={sla.inProgressMinutes} disabled={!canManageSettings} onChange={(value) => updateNumberSetting('sla', 'inProgressMinutes', value)} />
+        <NumberField label="未批准最大停留时长（分钟）" value={sla.openMinutes} disabled={!canManageSettings} onChange={(value) => updateNumberSetting('sla', 'openMinutes', value)} />
+        <NumberField label="未批准回流最大停留时长（分钟）" value={sla.inProgressMinutes} disabled={!canManageSettings} onChange={(value) => updateNumberSetting('sla', 'inProgressMinutes', value)} />
         <NumberField label="待审批最大停留时长（分钟）" value={sla.pendingApprovalMinutes} disabled={!canManageSettings} onChange={(value) => updateNumberSetting('sla', 'pendingApprovalMinutes', value)} />
         <NumberField label="催办间隔（分钟）" value={sla.reminderIntervalMinutes} disabled={!canManageSettings} onChange={(value) => updateNumberSetting('sla', 'reminderIntervalMinutes', value)} />
         <NumberField label="升级前最大催办次数" value={sla.maxReminderCountBeforeEscalation} disabled={!canManageSettings} onChange={(value) => updateNumberSetting('sla', 'maxReminderCountBeforeEscalation', value)} />

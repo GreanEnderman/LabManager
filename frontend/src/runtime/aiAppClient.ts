@@ -137,7 +137,6 @@ function mapChemical(record: {
   currentQuantity: number
   threshold: number
   status: string
-  labName: string | null
   ownerName: string | null
   updatedAt: string
   imageDataUrl: string | null
@@ -150,9 +149,11 @@ function mapChemical(record: {
     category: record.category ?? '',
     spec: record.spec ?? '',
     currentQuantity: record.currentQuantity,
+    batchNumber: '',
+    openedAt: '',
+    expiryDate: '',
     threshold: record.threshold,
     status: record.status,
-    labName: record.labName ?? '',
     ownerName: record.ownerName ?? '',
     updatedAt: record.updatedAt,
     imageDataUrl: record.imageDataUrl ?? '',
@@ -300,6 +301,22 @@ function mapActionToLog(action: AITaskActionDTO): AIActivityLog {
 }
 
 function buildReportSections(report: AIReportDTO): AIReport['sections'] {
+  const sections = Array.isArray(report.metadata.sections) ? report.metadata.sections : []
+  const metadataSections = sections
+    .map((section) => {
+      if (!section || typeof section !== 'object') return null
+      const item = section as { title?: unknown; content?: unknown }
+      return {
+        title: String(item.title ?? '章节'),
+        content: String(item.content ?? ''),
+      }
+    })
+    .filter((section): section is NonNullable<typeof section> => Boolean(section))
+
+  if (metadataSections.length > 0) {
+    return metadataSections
+  }
+
   return [
     {
       title: '摘要',
@@ -463,7 +480,6 @@ export const aiAppClient = {
         currentQuantity: row.currentQuantity,
         threshold: row.threshold,
         status: row.status,
-        labName: row.labName,
         ownerName: row.ownerName,
         updatedAt: row.updatedAt || null,
         imageDataUrl: row.imageDataUrl || null,

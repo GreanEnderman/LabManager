@@ -2,18 +2,39 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAI } from '../ai/AIStateLive'
 import { useAISettingsRuntime } from '../ai/AISettingsRuntimeLive'
+import { useRole } from '../auth/RoleContext'
 import { getTaskBySource } from '../ai/selectors'
 import { getEffectiveChemicalThreshold } from '../ai/thresholds'
 import { useImports } from '../imports/ImportContextLive'
 import type { ChemicalImportRecord } from '../imports/types'
 import InventoryOperationModal from '../components/InventoryOperationModal'
 import { aiAppClient } from '../runtime/aiAppFacadeAsync'
-import type { InventoryOperationInput, InventoryTransaction } from '../runtime/aiGateway'
+import { formatLocalDateTime } from '../runtime/dateTime'
+import type { InventoryOperationInput, InventoryOperationResponse, InventoryTransaction } from '../runtime/aiGateway'
 
 type ViewMode = 'chemicals' | 'transactions'
 
 function getChemicalInventoryStatus(currentQuantity: number, threshold: number) {
   return currentQuantity <= threshold ? '低库存' : '库存充足'
+}
+
+function mapOperationToTransaction(response: InventoryOperationResponse): InventoryTransaction {
+  return {
+    id: response.operation.id,
+    date: response.operation.operationDate,
+    name: response.operation.entityName,
+    type: response.operation.operationType === 'inbound' ? '入库' : '出库',
+    quantity: String(response.operation.quantity),
+    unit: response.operation.unit,
+    operator: response.operation.operatorName,
+    reason: response.operation.reason ?? '',
+  }
+}
+
+function normalizeMovementType(type: string) {
+  if (type === 'inbound' || type === '鍏ュ簱') return '入库'
+  if (type === 'outbound' || type === '鍑哄簱') return '出库'
+  return type
 }
 
 export default function ChemicalInventoryOps() {
@@ -30,8 +51,11 @@ export default function ChemicalInventoryOps() {
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   const { tasks } = useAI()
+  const { can } = useRole()
   const { settings } = useAISettingsRuntime()
-  const { chemicals, refreshChemicals, deleteChemical, isSubmitting } = useImports()
+  const { chemicals, movements, updateChemicalQuantity, deleteChemical, isSubmitting } = useImports()
+  const canCreateImports = can('imports:create')
+  const importEntityType = activeView === 'chemicals' ? 'chemical' : 'movement'
 
   const filteredChemicals = useMemo(
     () =>
@@ -47,16 +71,38 @@ export default function ChemicalInventoryOps() {
     [chemicals, keyword, settings, status],
   )
 
+  const importedTransactions = useMemo<InventoryTransaction[]>(
+    () =>
+      movements.map((record) => ({
+        id: record.id,
+        date: record.date,
+        name: record.name,
+        type: normalizeMovementType(record.type),
+        quantity: record.quantity,
+        unit: '',
+        operator: record.operator,
+        reason: record.reason,
+      })),
+    [movements],
+  )
+
+  const mergedTransactions = useMemo(() => {
+    const transactionMap = new Map<string, InventoryTransaction>()
+    transactions.forEach((record) => transactionMap.set(record.id, { ...record, type: normalizeMovementType(record.type) }))
+    importedTransactions.forEach((record) => transactionMap.set(record.id, record))
+    return [...transactionMap.values()].sort((left, right) => right.date.localeCompare(left.date))
+  }, [importedTransactions, transactions])
+
   const filteredTransactions = useMemo(
     () =>
-      transactions.filter((record) => {
+      mergedTransactions.filter((record) => {
         const searchText = movementKeyword.trim()
         return (
           (searchText === '' || record.name.includes(searchText)) &&
           (movementType === '全部类型' || record.type === movementType)
         )
       }),
-    [movementKeyword, movementType, transactions],
+    [mergedTransactions, movementKeyword, movementType],
   )
 
   async function loadTransactions() {
@@ -75,20 +121,25 @@ export default function ChemicalInventoryOps() {
   }, [])
 
   const openOperationModal = (chemical: ChemicalImportRecord, type: 'inbound' | 'outbound') => {
+    if (!canCreateImports) return
     setSelectedChemical(chemical)
     setOperationType(type)
     setModalOpen(true)
   }
 
   const handleOperationSubmit = async (operation: InventoryOperationInput) => {
+    if (!canCreateImports) {
+      throw new Error('当前角色没有库存操作权限')
+    }
+
     try {
-      await aiAppClient.createInventoryOperation(operation)
+      const response = await aiAppClient.createInventoryOperation(operation)
+      updateChemicalQuantity(response.updatedEntity)
+      setTransactions((current) => [mapOperationToTransaction(response), ...current].slice(0, 50))
       setNotification({
         type: 'success',
         message: `${operation.operationType === 'inbound' ? '入库' : '出库'}操作成功`,
       })
-      await refreshChemicals()
-      await loadTransactions()
       setTimeout(() => setNotification(null), 3000)
     } catch (error: unknown) {
       throw new Error(error instanceof Error ? error.message : '操作失败')
@@ -96,6 +147,7 @@ export default function ChemicalInventoryOps() {
   }
 
   const handleDeleteChemical = async (chemical: ChemicalImportRecord) => {
+    if (!canCreateImports) return
     if (!window.confirm(`确定要删除化学品“${chemical.name}”吗？相关出入库记录也会一并删除。`)) return
 
     try {
@@ -127,7 +179,7 @@ export default function ChemicalInventoryOps() {
           <h1 className="text-3xl font-bold text-on-surface">化学品管理</h1>
         </div>
         <div className="flex gap-3">
-          <Link to="/data-import" className="rounded-lg bg-surface-container-high px-4 py-2 text-on-surface transition-colors hover:bg-surface-container-highest">数据导入</Link>
+          <Link to={`/data-import?entityType=${importEntityType}`} className="rounded-lg bg-surface-container-high px-4 py-2 text-on-surface transition-colors hover:bg-surface-container-highest">数据导入</Link>
           <Link to="/ai-tasks" className="rounded-lg bg-primary px-4 py-2 text-on-primary transition-colors hover:bg-primary-container">查看 AI 任务中心</Link>
         </div>
       </div>
@@ -189,9 +241,9 @@ export default function ChemicalInventoryOps() {
                       <td className="px-6 py-4">{relatedTask ? <Link to="/ai-tasks" className="text-primary hover:text-primary-container">查看 AI 任务</Link> : <span className="text-sm text-on-surface-variant">暂无 AI 处理项</span>}</td>
                       <td className="px-6 py-4">
                         <div className="flex gap-2">
-                          <button onClick={() => openOperationModal(item, 'inbound')} className="rounded-lg bg-tertiary-container px-3 py-1 text-sm text-on-tertiary-container transition-colors hover:bg-tertiary hover:text-on-tertiary">入库</button>
-                          <button onClick={() => openOperationModal(item, 'outbound')} className="rounded-lg bg-error-container px-3 py-1 text-sm text-error transition-colors hover:bg-error hover:text-on-error">出库</button>
-                          <button onClick={() => handleDeleteChemical(item)} disabled={isSubmitting} className="rounded-lg border border-error px-3 py-1 text-sm text-error transition-colors hover:bg-error hover:text-on-error disabled:cursor-not-allowed disabled:opacity-50">删除</button>
+                          <button onClick={() => openOperationModal(item, 'inbound')} disabled={!canCreateImports} className="rounded-lg bg-tertiary-container px-3 py-1 text-sm text-on-tertiary-container transition-colors hover:bg-tertiary hover:text-on-tertiary disabled:cursor-not-allowed disabled:opacity-50">入库</button>
+                          <button onClick={() => openOperationModal(item, 'outbound')} disabled={!canCreateImports} className="rounded-lg bg-error-container px-3 py-1 text-sm text-error transition-colors hover:bg-error hover:text-on-error disabled:cursor-not-allowed disabled:opacity-50">出库</button>
+                          <button onClick={() => handleDeleteChemical(item)} disabled={isSubmitting || !canCreateImports} className="rounded-lg border border-error px-3 py-1 text-sm text-error transition-colors hover:bg-error hover:text-on-error disabled:cursor-not-allowed disabled:opacity-50">删除</button>
                         </div>
                       </td>
                     </tr>
@@ -241,7 +293,7 @@ export default function ChemicalInventoryOps() {
                     const isInbound = record.type === '入库'
                     return (
                       <tr key={record.id} className="transition-colors hover:bg-surface-container-low">
-                        <td className="px-6 py-4 text-on-surface-variant">{record.date || '-'}</td>
+                        <td className="px-6 py-4 text-on-surface-variant">{formatLocalDateTime(record.date)}</td>
                         <td className="px-6 py-4 text-on-surface">{record.name}</td>
                         <td className="px-6 py-4"><span className={`rounded-full px-3 py-1 text-sm ${isInbound ? 'bg-secondary-container text-on-secondary-container' : 'bg-tertiary-container text-on-tertiary-container'}`}>{record.type}</span></td>
                         <td className="px-6 py-4 font-medium text-on-surface">{record.quantity} {record.unit}</td>

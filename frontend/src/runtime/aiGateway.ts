@@ -49,6 +49,7 @@ export interface InventoryOperationInput {
   unit: string
   operator: { id: string; name: string; type: string }
   reason: string
+  operationDate?: string
   metadata: Record<string, unknown>
 }
 
@@ -85,12 +86,37 @@ export interface InventoryTransaction {
   reason: string
 }
 
+export interface InventoryOperationResponse {
+  operation: {
+    id: string
+    entityType: string
+    entityId: string
+    entityName: string
+    operationType: string
+    quantity: number
+    unit: string
+    operatorName: string
+    reason: string | null
+    operationDate: string
+    metadata: Record<string, unknown>
+  }
+  updatedEntity: {
+    id: string
+    currentQuantity: number
+    previousQuantity: number
+  }
+}
+
+export interface InventoryListOptions {
+  includeImages?: boolean
+}
+
 export interface AIGateway {
   getSettings(): Promise<AISettings>
   updateSettings(patch: Partial<AISettings>): Promise<AISettings>
-  listChemicals(): Promise<ChemicalInventoryDTO[]>
+  listChemicals(options?: InventoryListOptions): Promise<ChemicalInventoryDTO[]>
   deleteChemical(chemicalId: string): Promise<void>
-  listEquipment(): Promise<EquipmentAssetDTO[]>
+  listEquipment(options?: InventoryListOptions): Promise<EquipmentAssetDTO[]>
   deleteEquipment(equipmentId: string): Promise<void>
   listImportBatches(filters?: ImportBatchFilters): Promise<ImportBatchDTO[]>
   importChemicals(
@@ -111,7 +137,7 @@ export interface AIGateway {
     batch: ImportBatchDTO
     records: EquipmentAssetDTO[]
   }>
-  createInventoryOperation(operation: InventoryOperationInput): Promise<unknown>
+  createInventoryOperation(operation: InventoryOperationInput): Promise<InventoryOperationResponse>
   listInventoryTransactions(filters?: InventoryTransactionFilters): Promise<InventoryTransaction[]>
   inspectRuleEvents(now: string, maintenanceOverdueDays: number): Promise<AIEventDTO[]>
   listTasks(): Promise<AITaskDTO[]>

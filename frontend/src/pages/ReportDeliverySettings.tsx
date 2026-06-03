@@ -3,6 +3,8 @@ import { useRole } from '../auth/RoleContext'
 import { useAI } from '../ai/AIStateLive'
 import type { AIReportType, DeliveryScopeType, ReportDeliveryConfig, SupervisorEmailMapping } from '../ai/types'
 
+import { formatLocalDateTime } from '../runtime/dateTime'
+
 export default function ReportDeliverySettings() {
   const { can } = useRole()
   const canManageDelivery = can('report_delivery:manage')
@@ -288,7 +290,7 @@ export default function ReportDeliverySettings() {
                 </span>
               </div>
               <p className="mt-2 text-sm text-on-surface-variant">
-                {`${item.recipientName} · ${item.recipientEmail || '未匹配邮箱'} · ${item.sentAt}`}
+                {`${item.recipientName} · ${item.recipientEmail || '未匹配邮箱'} · ${formatLocalDateTime(item.sentAt)}`}
               </p>
               {item.errorMessage ? <p className="mt-1 text-sm text-error">{item.errorMessage}</p> : null}
             </div>

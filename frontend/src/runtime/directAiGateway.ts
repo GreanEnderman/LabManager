@@ -12,7 +12,7 @@
  */
 
 /* eslint-disable no-restricted-imports */
-import type { AIGateway, GatewayActor } from './aiGateway'
+import type { AIGateway, GatewayActor, InventoryListOptions } from './aiGateway'
 import type { ChemicalImportRecord, EquipmentImportRecord } from '../imports/types'
 
 let cachedServicesPromise: Promise<import('../../../backend/src/services/api-factory').AIApplicationServices> | null = null
@@ -75,13 +75,13 @@ export const directAiGateway: AIGateway = {
       updatedAt: response.settings.updatedAt,
     }
   },
-  async listChemicals() {
+  async listChemicals(_options?: InventoryListOptions) {
     return (await getServices()).listChemicals()
   },
   async deleteChemical() {
     throw new Error('Direct AI gateway does not support deleting chemicals.')
   },
-  async listEquipment() {
+  async listEquipment(_options?: InventoryListOptions) {
     return (await getServices()).listEquipment()
   },
   async deleteEquipment() {
@@ -108,7 +108,6 @@ export const directAiGateway: AIGateway = {
         currentQuantity: row.currentQuantity,
         threshold: row.threshold,
         status: row.status,
-        labName: row.labName,
         ownerName: row.ownerName,
         updatedAt: row.updatedAt || null,
         imageDataUrl: row.imageDataUrl || null,

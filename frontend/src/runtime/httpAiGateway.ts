@@ -13,7 +13,15 @@ import type {
   EquipmentAssetDTO,
   ImportBatchDTO,
 } from '../../../backend/src/contracts/shared'
-import type { AIGateway, CompletionReportInput, GatewayActor, ImportBatchFilters } from './aiGateway'
+import type {
+  AIGateway,
+  CompletionReportInput,
+  GatewayActor,
+  ImportBatchFilters,
+  InventoryListOptions,
+  InventoryOperationInput,
+  InventoryOperationResponse,
+} from './aiGateway'
 import type { InventoryTransaction } from './aiGateway'
 import type { AIAnalysisSummary, AISettings } from '../ai/types'
 import type { ChemicalImportRecord, EquipmentImportRecord } from '../imports/types'
@@ -152,16 +160,24 @@ export const httpAiGateway: AIGateway = {
     })
     return response.settings
   },
-  async listChemicals() {
-    return requestJson<ChemicalInventoryDTO[]>('/chemicals')
+  async listChemicals(options?: InventoryListOptions) {
+    return requestJson<ChemicalInventoryDTO[]>(
+      withQuery('/chemicals', {
+        includeImages: options?.includeImages === false ? 'false' : undefined,
+      }),
+    )
   },
   async deleteChemical(chemicalId: string) {
     await requestJson<{ deletedChemicalId: string }>(`/chemicals/${encodeURIComponent(chemicalId)}`, {
       method: 'DELETE',
     })
   },
-  async listEquipment() {
-    return requestJson<EquipmentAssetDTO[]>('/equipment')
+  async listEquipment(options?: InventoryListOptions) {
+    return requestJson<EquipmentAssetDTO[]>(
+      withQuery('/equipment', {
+        includeImages: options?.includeImages === false ? 'false' : undefined,
+      }),
+    )
   },
   async deleteEquipment(equipmentId: string) {
     await requestJson<{ deletedEquipmentId: string }>(`/equipment/${encodeURIComponent(equipmentId)}`, {
@@ -193,7 +209,6 @@ export const httpAiGateway: AIGateway = {
           currentQuantity: row.currentQuantity,
           threshold: row.threshold,
           status: row.status,
-          labName: row.labName,
           ownerName: row.ownerName,
           updatedAt: row.updatedAt || null,
           imageDataUrl: row.imageDataUrl || null,
@@ -229,36 +244,8 @@ export const httpAiGateway: AIGateway = {
       }),
     })
   },
-  async createInventoryOperation(operation: {
-    entityType: 'chemical' | 'equipment'
-    entityId: string
-    operationType: 'inbound' | 'outbound'
-    quantity: number
-    unit: string
-    operator: { id: string; name: string; type: string }
-    reason: string
-    metadata: Record<string, any>
-  }) {
-    return requestJson<{
-      operation: {
-        id: string
-        entityType: string
-        entityId: string
-        entityName: string
-        operationType: string
-        quantity: number
-        unit: string
-        operatorName: string
-        reason: string | null
-        operationDate: string
-        metadata: Record<string, any>
-      }
-      updatedEntity: {
-        id: string
-        currentQuantity: number
-        previousQuantity: number
-      }
-    }>('/inventory/operations', {
+  async createInventoryOperation(operation: InventoryOperationInput) {
+    return requestJson<InventoryOperationResponse>('/inventory/operations', {
       method: 'POST',
       body: JSON.stringify({
         entityType: operation.entityType,
@@ -268,6 +255,7 @@ export const httpAiGateway: AIGateway = {
         unit: operation.unit,
         operator: operation.operator,
         reason: operation.reason,
+        operationDate: operation.operationDate,
         metadata: operation.metadata,
       }),
     })

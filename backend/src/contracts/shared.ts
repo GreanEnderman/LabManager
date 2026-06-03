@@ -176,7 +176,6 @@ export interface ChemicalInventoryDTO {
   currentQuantity: number
   threshold: number
   status: string
-  labName: string | null
   ownerName: string | null
   updatedAt: string
   imageDataUrl: string | null
@@ -629,7 +628,6 @@ export interface ChemicalImportRowDTO {
   currentQuantity: number
   threshold?: number | null
   status?: string | null
-  labName?: string | null
   ownerName?: string | null
   updatedAt?: string | null
   imageDataUrl?: string | null

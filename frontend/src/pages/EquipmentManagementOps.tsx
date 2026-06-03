@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAI } from '../ai/AIStateLive'
+import { useRole } from '../auth/RoleContext'
 import { getTaskBySource } from '../ai/selectors'
 import { useImports } from '../imports/ImportContextLive'
 import type { EquipmentImportRecord } from '../imports/types'
@@ -44,7 +45,10 @@ export default function EquipmentManagementOps() {
   const [maintenanceStatus, setMaintenanceStatus] = useState('全部状态')
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const { tasks } = useAI()
+  const { can } = useRole()
   const { equipment, maintenanceRecords, deleteEquipment, isSubmitting } = useImports()
+  const canCreateImports = can('imports:create')
+  const importEntityType = activeView === 'equipment' ? 'equipment' : 'maintenance'
 
   const filteredEquipment = useMemo(
     () =>
@@ -74,6 +78,7 @@ export default function EquipmentManagementOps() {
   )
 
   const handleDeleteEquipment = async (item: EquipmentImportRecord) => {
+    if (!canCreateImports) return
     if (!window.confirm(`确定要删除设备“${item.name}”吗？相关维护记录也会一并删除。`)) return
 
     try {
@@ -105,7 +110,7 @@ export default function EquipmentManagementOps() {
           <h1 className="text-3xl font-bold text-on-surface">仪器设备</h1>
         </div>
         <div className="flex gap-3">
-          <Link to="/data-import" className="rounded-lg bg-surface-container-high px-4 py-2 text-on-surface transition-colors hover:bg-surface-container-highest">数据导入</Link>
+          <Link to={`/data-import?entityType=${importEntityType}`} className="rounded-lg bg-surface-container-high px-4 py-2 text-on-surface transition-colors hover:bg-surface-container-highest">数据导入</Link>
           <Link to="/ai-dashboard" className="rounded-lg bg-primary px-4 py-2 text-on-primary transition-colors hover:bg-primary-container">查看 AI 驾驶台</Link>
         </div>
       </div>
@@ -154,7 +159,7 @@ export default function EquipmentManagementOps() {
                       <button
                         type="button"
                         onClick={() => handleDeleteEquipment(item)}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || !canCreateImports}
                         className="rounded-lg border border-error px-4 py-2 text-sm text-error transition-colors hover:bg-error hover:text-on-error disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         删除

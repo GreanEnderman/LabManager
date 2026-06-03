@@ -69,7 +69,7 @@ export function validateChemicalRows(rows: ChemicalImportRecord[]) {
       })
       invalid = true
     }
-    const key = dedupeKey([row.id, row.name, row.labName])
+    const key = dedupeKey([row.id, row.name])
     if (seen.has(key)) {
       errors.push({
         rowNumber,
@@ -171,9 +171,11 @@ export function createEmptyChemicalRow(): ChemicalImportRecord {
     category: '有机溶剂',
     spec: '',
     currentQuantity: 0,
+    batchNumber: '',
+    openedAt: '',
+    expiryDate: '',
     threshold: 5,
     status: 'normal',
-    labName: '',
     ownerName: '',
     updatedAt: '',
     imageDataUrl: '',

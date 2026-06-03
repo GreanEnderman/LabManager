@@ -288,7 +288,7 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
           : `本周期累计处理 ${tasks.filter((item) => item.status === 'done' || item.status === 'closed').length} 个任务。`,
       highlights: [
         `风险事件 ${events.length} 条`,
-        `进行中任务 ${tasks.filter((item) => item.status === 'in_progress').length} 个`,
+        `未批准任务 ${tasks.filter((item) => item.status === 'in_progress').length} 个`,
         `待审批事项 ${approvals.filter((item) => item.status === 'pending').length} 项`,
       ],
     }

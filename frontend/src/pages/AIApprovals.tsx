@@ -2,6 +2,7 @@
 import { useRole } from '../auth/RoleContext'
 import { useAI } from '../ai/AIStateLive'
 import { approvalStatusClass, approvalStatusLabel } from '../ai/labels'
+import { formatLocalDateTime } from '../runtime/dateTime'
 
 export default function AIApprovals() {
   const { can } = useRole()
@@ -89,7 +90,7 @@ export default function AIApprovals() {
               <div className="mb-4 grid grid-cols-2 gap-3 text-sm">
                 <InfoCard label="关联任务" value={relatedTask?.title ?? '-'} />
                 <InfoCard label="风险等级" value={selectedApproval.riskLevel} />
-                <InfoCard label="发起时间" value={selectedApproval.createdAt} />
+                <InfoCard label="发起时间" value={formatLocalDateTime(selectedApproval.createdAt)} />
                 <InfoCard label="任务状态" value={relatedTask?.status ?? '-'} />
               </div>
 
@@ -158,7 +159,7 @@ export default function AIApprovals() {
                     <div key={log.id} className="rounded-lg bg-surface-container-low p-3 text-sm">
                       <div className="flex items-center justify-between gap-3">
                         <p className="font-medium text-on-surface">{log.action}</p>
-                        <span className="text-xs text-on-surface-variant">{log.timestamp}</span>
+                        <span className="text-xs text-on-surface-variant">{formatLocalDateTime(log.timestamp)}</span>
                       </div>
                       <p className="mt-1 text-on-surface-variant">{log.detail}</p>
                     </div>

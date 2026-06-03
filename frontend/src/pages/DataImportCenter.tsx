@@ -1,4 +1,6 @@
 ﻿import { useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useRole } from '../auth/RoleContext'
 import { createEmptyChemicalRow, createEmptyEquipmentRow } from '../imports/domain'
 import {
@@ -8,6 +10,7 @@ import {
   parseImportFile,
 } from '../imports/fileImport'
 import { useImports } from '../imports/ImportContextLive'
+import { formatLocalDateTime } from '../runtime/dateTime'
 import type {
   ChemicalImportRecord,
   EquipmentImportRecord,
@@ -53,11 +56,15 @@ const previewColumns: Record<ImportEntityType, Array<{ key: string; label: strin
     { key: 'id', label: '记录 ID' },
     { key: 'name', label: '名称' },
     { key: 'casNumber', label: 'CAS' },
-    { key: 'category', label: '分类' },
-    { key: 'spec', label: '规格' },
+    { key: 'spec', label: '规格重量 ml（g）/瓶' },
+    { key: 'category', label: '物理特性' },
+    { key: 'status', label: '使用状态' },
     { key: 'currentQuantity', label: '当前库存', type: 'number' },
+    { key: 'batchNumber', label: '生产批号' },
+    { key: 'openedAt', label: '开封日期' },
+    { key: 'expiryDate', label: '保质期' },
+    { key: 'remark', label: '图片/备注' },
     { key: 'threshold', label: '阈值', type: 'number' },
-    { key: 'labName', label: '实验室' },
   ],
   equipment: [
     { key: 'id', label: '记录 ID' },
@@ -66,7 +73,6 @@ const previewColumns: Record<ImportEntityType, Array<{ key: string; label: strin
     { key: 'model', label: '型号' },
     { key: 'status', label: '状态' },
     { key: 'ownerName', label: '负责人' },
-    { key: 'labName', label: '实验室' },
   ],
   movement: [
     { key: 'id', label: '记录 ID' },
@@ -88,8 +94,15 @@ const previewColumns: Record<ImportEntityType, Array<{ key: string; label: strin
   ],
 }
 
-function createSampleRows(entityType: ImportEntityType): DraftRow[] {
-  return [buildEmptyRow(entityType)]
+const importRequirementCopy: Record<ImportEntityType, string> = {
+  chemical:
+    '记录 ID、名称、当前库存必填；规格、物理特性、使用状态、生产批号、开封日期、保质期、图片/备注可按实际补充；当前库存和安全阈值需为非负数字；状态留空时按库存与阈值自动判断；如填写图片或上传内嵌图片，会统一映射到图片字段。',
+  equipment:
+    '记录 ID、名称、状态必填；厂商、型号、负责人可按台账填写；上次维护时间和更新时间建议使用完整日期时间；状态请保持与设备台账一致；如填写图片，请提供可访问的图片地址。',
+  movement:
+    '物料名称输入后从库存候选中选择；类型选择入库/出库；数量需为大于 0 的数字；业务时间年月日必填，时分秒可不填；经手人和原因不能为空。',
+  maintenance:
+    '记录 ID、设备名称、维护状态、维护时间必填；设备编号建议与设备台账保持一致；维护时间请填写完整年月日，必要时补充时分秒；维修人和维护摘要建议补全，便于后续追踪与审计。',
 }
 
 function buildEmptyRow(entityType: ImportEntityType): DraftRow {
@@ -122,7 +135,42 @@ function getPreviewImage(row: DraftRow, entityType: ImportEntityType) {
   return 'imageDataUrl' in row ? row.imageDataUrl : ''
 }
 
+function formatImportError(error: ImportBatchRecord['errors'][number]) {
+  const rowLabel = error.rowNumber > 0 ? `第 ${error.rowNumber} 行` : '未知行'
+  return `${rowLabel}：${error.message || '导入失败，未返回具体错误信息。'}`
+}
+
+function getMovementDateParts(value: string) {
+  const match = value.match(/^(\d{0,4})-?(\d{0,2})-?(\d{0,2})(?:[ T](\d{0,2}):?(\d{0,2}):?(\d{0,2}))?/)
+  return {
+    year: match?.[1] ?? '',
+    month: match?.[2] ?? '',
+    day: match?.[3] ?? '',
+    hour: match?.[4] ?? '',
+    minute: match?.[5] ?? '',
+    second: match?.[6] ?? '',
+  }
+}
+
+function buildMovementDate(parts: ReturnType<typeof getMovementDateParts>) {
+  const date = [parts.year, parts.month, parts.day].join('-')
+  const hasDate = parts.year || parts.month || parts.day
+  const hasTime = parts.hour || parts.minute || parts.second
+  if (!hasDate) return ''
+  if (!hasTime) return date
+  return `${date} ${parts.hour || '00'}:${parts.minute || '00'}:${parts.second || '00'}`
+}
+
+function getValidEntityType(value: string | null): ImportEntityType {
+  if (value === 'chemical' || value === 'equipment' || value === 'movement' || value === 'maintenance') {
+    return value
+  }
+  return 'chemical'
+}
+
 export default function DataImportCenter() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const initialEntityType = getValidEntityType(searchParams.get('entityType'))
   const { role, can } = useRole()
   const canCreateImports = can('imports:create')
   const {
@@ -139,38 +187,71 @@ export default function DataImportCenter() {
     importMaintenanceRecords,
   } = useImports()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-  const [entityType, setEntityType] = useState<ImportEntityType>('chemical')
+  const [entityType, setEntityType] = useState<ImportEntityType>(() => initialEntityType)
   const [source, setSource] = useState<ImportSource>('manual')
   const [fileName, setFileName] = useState('')
   const [fileError, setFileError] = useState<string | null>(null)
   const [lastBatch, setLastBatch] = useState<ImportBatchRecord | null>(null)
-  const [draftRows, setDraftRows] = useState<DraftRow[]>([buildEmptyRow('chemical')])
+  const [draftRows, setDraftRows] = useState<DraftRow[]>(() => [buildEmptyRow(initialEntityType)])
   const [parsedImportDraft, setParsedImportDraft] = useState<ParsedImportDraft | null>(null)
   const [columnMapping, setColumnMapping] = useState<Record<string, ImportFieldKey | null>>({})
+  const [openChemicalSearchRow, setOpenChemicalSearchRow] = useState<number | null>(null)
 
   const visibleBatches = useMemo(() => batches.filter((batch) => batch.entityType === entityType), [batches, entityType])
   const currentRecords = entityType === 'chemical' ? chemicals : entityType === 'equipment' ? equipment : entityType === 'movement' ? movements : maintenanceRecords
   const fieldOptions = useMemo(() => getImportFieldOptions(entityType), [entityType])
   const columns = previewColumns[entityType]
   const mappingReady = parsedImportDraft ? hasRequiredMapping(entityType, columnMapping) : true
+  const canSubmitCurrentMode = source === 'manual' || Boolean(parsedImportDraft && mappingReady)
+  const latestSuccessfulBatch = useMemo(
+    () =>
+      lastBatch?.entityType === entityType && lastBatch.successCount > 0
+        ? lastBatch
+        : visibleBatches.find((batch) => batch.successCount > 0) ?? null,
+    [entityType, lastBatch, visibleBatches],
+  )
+  const recentSuccessfulRecords = useMemo(() => {
+    const recordById = new Map(currentRecords.map((record) => [(record as { id: string }).id, record]))
+    const recordsFromLatestBatch =
+      latestSuccessfulBatch?.importedRecordIds
+        .map((recordId) => recordById.get(recordId))
+        .filter((record): record is DraftRow => Boolean(record)) ?? []
+
+    return (recordsFromLatestBatch.length > 0 ? recordsFromLatestBatch : currentRecords).slice(0, 6)
+  }, [currentRecords, latestSuccessfulBatch])
 
   function resetDraftRows(nextEntityType: ImportEntityType) {
     setDraftRows([buildEmptyRow(nextEntityType)])
   }
 
-  function resetImportSession(nextEntityType: ImportEntityType) {
+  function resetImportSession(nextEntityType: ImportEntityType, options?: { preserveLastBatch?: boolean }) {
+    setFileName('')
+    setFileError(null)
+    if (!options?.preserveLastBatch) setLastBatch(null)
+    setParsedImportDraft(null)
+    setColumnMapping({})
+    setOpenChemicalSearchRow(null)
+    resetDraftRows(nextEntityType)
+  }
+
+  function handleEntityTypeChange(nextEntityType: ImportEntityType) {
+    setSearchParams(nextEntityType === 'chemical' ? {} : { entityType: nextEntityType })
+    setEntityType(nextEntityType)
+    resetImportSession(nextEntityType)
+  }
+
+  useEffect(() => {
+    const nextEntityType = getValidEntityType(searchParams.get('entityType'))
+    if (nextEntityType === entityType) return
+    setEntityType(nextEntityType)
     setFileName('')
     setFileError(null)
     setLastBatch(null)
     setParsedImportDraft(null)
     setColumnMapping({})
+    setOpenChemicalSearchRow(null)
     resetDraftRows(nextEntityType)
-  }
-
-  function handleEntityTypeChange(nextEntityType: ImportEntityType) {
-    setEntityType(nextEntityType)
-    resetImportSession(nextEntityType)
-  }
+  }, [entityType, searchParams])
 
   function updateDraftRow(index: number, field: string, value: string) {
     setDraftRows((current) =>
@@ -187,14 +268,125 @@ export default function DataImportCenter() {
   }
 
   function removeDraftRow(index: number) {
+    setOpenChemicalSearchRow(null)
     setDraftRows((current) => (current.length === 1 ? current : current.filter((_, rowIndex) => rowIndex !== index)))
   }
 
-  function loadSample() {
-    setFileError(null)
-    setParsedImportDraft(null)
-    setColumnMapping({})
-    setDraftRows(createSampleRows(entityType))
+  function getChemicalMatches(value: string) {
+    const keyword = value.trim().toLowerCase()
+    if (!keyword) return chemicals.slice(0, 5)
+    return chemicals
+      .filter((chemical) => chemical.name.toLowerCase().includes(keyword) || chemical.id.toLowerCase().includes(keyword))
+      .slice(0, 5)
+  }
+
+  function updateMovementDatePart(index: number, field: keyof ReturnType<typeof getMovementDateParts>, value: string) {
+    const sanitized = value.replace(/\D/g, '').slice(0, field === 'year' ? 4 : 2)
+    const row = draftRows[index] as MovementImportRecord
+    const nextParts = { ...getMovementDateParts(row.date), [field]: sanitized }
+    updateDraftRow(index, 'date', buildMovementDate(nextParts))
+  }
+
+  function renderMovementInput(row: MovementImportRecord, index: number, column: { key: string; label: string; type?: 'number' }) {
+    if (column.key === 'name') {
+      const matches = getChemicalMatches(row.name)
+      return (
+        <div className="relative min-w-[240px]">
+          <input
+            type="text"
+            value={row.name}
+            onChange={(event) => {
+              setOpenChemicalSearchRow(index)
+              updateDraftRow(index, 'name', event.target.value)
+            }}
+            onFocus={() => {
+              if (row.name.trim()) setOpenChemicalSearchRow(index)
+            }}
+            placeholder="输入名称或记录 ID 搜索"
+            className="w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-sm"
+            disabled={!canCreateImports || isLoading || isSubmitting}
+          />
+          {row.name.trim() && openChemicalSearchRow === index ? (
+            <div className="absolute left-0 top-[calc(100%+4px)] z-[100] max-h-32 w-full overflow-y-auto rounded-lg border border-outline-variant bg-surface text-sm shadow-lg">
+              {matches.length > 0 ? (
+                matches.map((chemical) => (
+                  <button
+                    key={chemical.id}
+                    type="button"
+                    onMouseDown={(event) => {
+                      event.preventDefault()
+                      updateDraftRow(index, 'name', chemical.name)
+                      setOpenChemicalSearchRow(null)
+                    }}
+                    className="block w-full px-3 py-2 text-left text-on-surface transition-colors hover:bg-surface-container-low"
+                    disabled={!canCreateImports || isLoading || isSubmitting}
+                  >
+                    <span className="font-medium">{chemical.name}</span>
+                    <span className="ml-2 text-xs text-on-surface-variant">{chemical.id}</span>
+                  </button>
+                ))
+              ) : (
+                <p className="px-3 py-2 text-on-surface-variant">未找到匹配物料</p>
+              )}
+            </div>
+          ) : null}
+        </div>
+      )
+    }
+
+    if (column.key === 'type') {
+      return (
+        <select
+          value={row.type}
+          onChange={(event) => updateDraftRow(index, 'type', event.target.value)}
+          className="w-full min-w-[120px] rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-sm"
+          disabled={!canCreateImports || isLoading || isSubmitting}
+        >
+          <option value="入库">入库</option>
+          <option value="出库">出库</option>
+        </select>
+      )
+    }
+
+    if (column.key === 'date') {
+      const parts = getMovementDateParts(row.date)
+      return (
+        <div className="flex min-w-[360px] flex-wrap items-center gap-2">
+          {([
+            ['year', '年', 4],
+            ['month', '月', 2],
+            ['day', '日', 2],
+            ['hour', '时', 2],
+            ['minute', '分', 2],
+            ['second', '秒', 2],
+          ] as Array<[keyof typeof parts, string, number]>).map(([field, label, maxLength]) => (
+            <label key={field} className="flex items-center gap-1 text-xs text-on-surface-variant">
+              <input
+                type="text"
+                inputMode="numeric"
+                value={parts[field]}
+                onChange={(event) => updateMovementDatePart(index, field, event.target.value)}
+                maxLength={maxLength}
+                placeholder={field === 'year' ? '2026' : field === 'hour' || field === 'minute' || field === 'second' ? '可空' : '00'}
+                className={`${field === 'year' ? 'w-16' : 'w-12'} rounded-lg border border-outline-variant bg-surface-container-low px-2 py-2 text-sm`}
+                disabled={!canCreateImports || isLoading || isSubmitting}
+              />
+              <span>{label}</span>
+            </label>
+          ))}
+        </div>
+      )
+    }
+
+    return (
+      <input
+        type={column.type === 'number' ? 'number' : 'text'}
+        value={String((row as unknown as Record<string, unknown>)[column.key] ?? '')}
+        onChange={(event) => updateDraftRow(index, column.key, event.target.value)}
+        className="w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-sm"
+        disabled={!canCreateImports || isLoading || isSubmitting}
+      />
+    )
   }
 
   async function handleFileSelected(event: React.ChangeEvent<HTMLInputElement>) {
@@ -245,6 +437,10 @@ export default function DataImportCenter() {
 
   async function handleSubmit() {
     if (!canCreateImports || isSubmitting) return
+    if (source === 'excel' && !parsedImportDraft) {
+      setFileError('请先选择导入文件。')
+      return
+    }
     if (source === 'excel' && !mappingReady) {
       setFileError('请先补全必填字段映射，再执行导入。')
       return
@@ -262,7 +458,9 @@ export default function DataImportCenter() {
             : await importMaintenanceRecords(draftRows as MaintenanceImportRecord[], source, file, importedBy)
 
     setLastBatch(batch)
-    resetImportSession(entityType)
+    if (batch.failureCount === 0) {
+      resetImportSession(entityType, { preserveLastBatch: true })
+    }
   }
 
   return (
@@ -296,19 +494,14 @@ export default function DataImportCenter() {
             <>
               <input ref={fileInputRef} type="file" accept=".csv,.txt,.xlsx" onChange={handleFileSelected} className="hidden" disabled={isLoading || isSubmitting || !canCreateImports} />
               <button onClick={() => fileInputRef.current?.click()} className="rounded-lg border border-outline-variant px-4 py-2 text-sm text-on-surface transition-colors hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-60" disabled={isLoading || isSubmitting || !canCreateImports}>选择导入文件</button>
-              <div className="min-w-[280px] rounded-lg border border-outline-variant bg-surface-container-low px-4 py-2 text-sm text-on-surface">{fileName || '支持 CSV / TXT / XLSX，可直接上传 Excel'}</div>
             </>
           ) : null}
           <button onClick={downloadTemplate} className="rounded-lg border border-outline-variant px-4 py-2 text-sm text-on-surface transition-colors hover:bg-surface-container-low">下载模板</button>
-          <button onClick={loadSample} className="rounded-lg border border-outline-variant px-4 py-2 text-sm text-on-surface transition-colors hover:bg-surface-container-low" disabled={isLoading || isSubmitting}>加载示例数据</button>
         </div>
 
-        {source === 'excel' ? (
+        {source === 'excel' && (fileError || parsedImportDraft) ? (
           <div className="mt-4 space-y-4 rounded-lg border border-dashed border-outline-variant bg-surface-container-low p-4">
-            <div>
-              <p className="text-sm font-medium text-on-surface">批量导入说明</p>
-              {fileError ? <p className="mt-2 text-sm text-error">{fileError}</p> : null}
-            </div>
+            {fileError ? <p className="text-sm text-error">{fileError}</p> : null}
             {parsedImportDraft ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
@@ -340,52 +533,83 @@ export default function DataImportCenter() {
           </div>
         ) : null}
 
-        <div className="mt-4 overflow-hidden rounded-lg border border-outline-variant">
-          <table className="w-full">
-            <thead className="bg-surface-container-high text-left text-sm text-on-surface">
-              <tr>
-                {columns.map((column) => <th key={column.key} className="px-4 py-3">{column.label}</th>)}
-                {(entityType === 'chemical' || entityType === 'equipment') ? <th className="px-4 py-3">图片预览</th> : null}
-                <th className="px-4 py-3">操作</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-outline-variant bg-surface">
-              {draftRows.map((row, index) => (
-                <tr key={(row as { id: string }).id || `${entityType}-${index}`}>
-                  {columns.map((column) => (
-                    <td key={column.key} className="px-4 py-3"><input type={column.type === 'number' ? 'number' : 'text'} value={String(((row as unknown) as Record<string, unknown>)[column.key] ?? '')} onChange={(event) => updateDraftRow(index, column.key, event.target.value)} className="w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-sm" disabled={!canCreateImports || isLoading || isSubmitting} /></td>
-                  ))}
-                  {(entityType === 'chemical' || entityType === 'equipment') ? (
-                    <td className="px-4 py-3">
-                      {getPreviewImage(row, entityType) ? (
-                        <img
-                          src={getPreviewImage(row, entityType)}
-                          alt={String(((row as unknown) as Record<string, unknown>).name ?? '导入图片')}
-                          className="h-16 w-16 rounded-lg border border-outline-variant object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-dashed border-outline-variant text-xs text-on-surface-variant">
-                          无图
-                        </div>
-                      )}
-                    </td>
-                  ) : null}
-                  <td className="px-4 py-3">{canCreateImports ? <button onClick={() => removeDraftRow(index)} className="text-sm text-error transition-colors hover:opacity-80" disabled={isLoading || isSubmitting}>删除</button> : <span className="text-sm text-on-surface-variant">只读</span>}</td>
+        {importRequirementCopy[entityType] ? (
+          <div className="mt-4 rounded-lg border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+            <span className="font-medium text-on-surface">填写要求：</span>
+            {importRequirementCopy[entityType]}
+          </div>
+        ) : null}
+
+        {source === 'manual' || (source === 'excel' && parsedImportDraft) ? (
+          <div className={`mt-4 rounded-lg border border-outline-variant ${entityType === 'movement' ? 'overflow-visible' : 'overflow-x-auto'}`}>
+            <table className="w-full">
+              <thead className="bg-surface-container-high text-left text-sm text-on-surface">
+                <tr>
+                  {columns.map((column) => <th key={column.key} className="px-4 py-3">{column.label}</th>)}
+                  {(entityType === 'chemical' || entityType === 'equipment') ? <th className="px-4 py-3">图片预览</th> : null}
+                  <th className="px-4 py-3">操作</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-outline-variant bg-surface">
+                {draftRows.map((row, index) => (
+                  <tr key={(row as { id: string }).id || `${entityType}-${index}`}>
+                    {columns.map((column) => (
+                      <td key={column.key} className="px-4 py-3">
+                        {entityType === 'movement'
+                          ? renderMovementInput(row as MovementImportRecord, index, column)
+                          : (
+                            <input
+                              type={column.type === 'number' ? 'number' : 'text'}
+                              value={String(((row as unknown) as Record<string, unknown>)[column.key] ?? '')}
+                              onChange={(event) => updateDraftRow(index, column.key, event.target.value)}
+                              className="w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-sm"
+                              disabled={!canCreateImports || isLoading || isSubmitting}
+                            />
+                          )}
+                      </td>
+                    ))}
+                    {(entityType === 'chemical' || entityType === 'equipment') ? (
+                      <td className="px-4 py-3">
+                        {getPreviewImage(row, entityType) ? (
+                          <img
+                            src={getPreviewImage(row, entityType)}
+                            alt={String(((row as unknown) as Record<string, unknown>).name ?? '导入图片')}
+                            className="h-16 w-16 rounded-lg border border-outline-variant object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-dashed border-outline-variant text-xs text-on-surface-variant">
+                            无图
+                          </div>
+                        )}
+                      </td>
+                    ) : null}
+                    <td className="px-4 py-3">{canCreateImports ? <button onClick={() => removeDraftRow(index)} className="text-sm text-error transition-colors hover:opacity-80" disabled={isLoading || isSubmitting}>删除</button> : <span className="text-sm text-on-surface-variant">只读</span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           {canCreateImports ? (
             <div className="flex gap-3">
-              <button onClick={addDraftRow} className="rounded-lg border border-outline-variant px-4 py-2 text-sm text-on-surface transition-colors hover:bg-surface-container-low" disabled={isLoading || isSubmitting}>添加一行</button>
-              <button onClick={handleSubmit} className="rounded-lg bg-primary px-4 py-2 text-sm text-on-primary transition-colors hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-60" disabled={isLoading || isSubmitting || (source === 'excel' && !mappingReady)}>{isSubmitting ? '提交中...' : source === 'manual' ? '提交录入' : '执行导入'}</button>
+              {source === 'manual' ? <button onClick={addDraftRow} className="rounded-lg border border-outline-variant px-4 py-2 text-sm text-on-surface transition-colors hover:bg-surface-container-low" disabled={isLoading || isSubmitting}>添加一行</button> : null}
+              <button onClick={handleSubmit} className="rounded-lg bg-primary px-4 py-2 text-sm text-on-primary transition-colors hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-60" disabled={isLoading || isSubmitting || !canSubmitCurrentMode}>{isSubmitting ? '提交中...' : source === 'manual' ? '提交录入' : '执行导入'}</button>
             </div>
           ) : <p className="text-sm text-on-surface-variant">普通成员仅可查看导入模板、结果和历史记录。</p>}
           <p className="text-sm text-on-surface-variant">当前记录数：{currentRecords.length}，导入后会自动生成结果摘要和错误清单。</p>
         </div>
+        {lastBatch?.entityType === entityType && lastBatch.failureCount > 0 ? (
+          <div className="mt-4 rounded-lg border border-error bg-error-container px-4 py-3 text-sm text-error">
+            <p className="font-medium">本次导入失败 {lastBatch.failureCount} 条，失败行已保留在上方表格中。</p>
+            <div className="mt-2 space-y-1">
+              {lastBatch.errors.slice(0, 5).map((error) => (
+                <p key={`${lastBatch.id}-${error.rowNumber}-${error.field}`}>{formatImportError(error)}</p>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </section>
 
       {lastBatch ? (
@@ -394,18 +618,25 @@ export default function DataImportCenter() {
             <div><h2 className="text-xl font-semibold text-on-surface">最近一次导入结果</h2><p className="mt-1 text-sm text-on-surface-variant">成功 {lastBatch.successCount} 条，失败 {lastBatch.failureCount} 条，触发规则事件 {lastBatch.generatedEventCount} 条。</p></div>
             <span className={`rounded-full px-3 py-1 text-sm ${importStatusTone[lastBatch.status]}`}>{importStatusLabel[lastBatch.status]}</span>
           </div>
-          {lastBatch.errors.length > 0 ? <div className="mt-4 text-sm text-error">本次仍存在错误清单，请查看导入结果详情。</div> : null}
+          {lastBatch.errors.length > 0 ? (
+            <div className="mt-4 space-y-1 text-sm text-error">
+              <p>本次仍存在错误清单：</p>
+              {lastBatch.errors.slice(0, 3).map((error) => (
+                <p key={`${error.rowNumber}-${error.field}`}>{formatImportError(error)}</p>
+              ))}
+            </div>
+          ) : null}
         </section>
       ) : null}
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr,1fr]">
         <div className="rounded-lg border border-outline-variant bg-surface p-6">
           <div className="flex items-center justify-between gap-4"><h2 className="text-xl font-semibold text-on-surface">导入历史</h2><span className="text-sm text-on-surface-variant">{visibleBatches.length} 个批次</span></div>
-          <div className="mt-4 space-y-3">{visibleBatches.map((batch) => <div key={batch.id} className="rounded-lg border border-outline-variant bg-surface-container-low p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-medium text-on-surface">{batch.fileName ?? `${entityLabelMap[batch.entityType]} 手工录入`}</p><p className="mt-1 text-sm text-on-surface-variant">{batch.source === 'manual' ? '手工录入' : 'Excel 导入'} · {batch.importedBy} · {new Date(batch.createdAt).toLocaleString('zh-CN')}</p></div><span className={`rounded-full px-3 py-1 text-sm ${importStatusTone[batch.status]}`}>{importStatusLabel[batch.status]}</span></div><div className="mt-3 grid grid-cols-4 gap-3 text-sm"><div className="rounded bg-surface px-3 py-2 text-on-surface">总数 {batch.totalCount}</div><div className="rounded bg-surface px-3 py-2 text-on-surface">成功 {batch.successCount}</div><div className="rounded bg-surface px-3 py-2 text-on-surface">失败 {batch.failureCount}</div><div className="rounded bg-surface px-3 py-2 text-on-surface">事件 {batch.generatedEventCount}</div></div></div>)}</div>
+          <div className="mt-4 space-y-3">{visibleBatches.map((batch) => <div key={batch.id} className="rounded-lg border border-outline-variant bg-surface-container-low p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-medium text-on-surface">{batch.fileName ?? `${entityLabelMap[batch.entityType]} 手工录入`}</p><p className="mt-1 text-sm text-on-surface-variant">{batch.source === 'manual' ? '手工录入' : 'Excel 导入'} · {batch.importedBy} · {formatLocalDateTime(batch.createdAt)}</p></div><span className={`rounded-full px-3 py-1 text-sm ${importStatusTone[batch.status]}`}>{importStatusLabel[batch.status]}</span></div><div className="mt-3 grid grid-cols-4 gap-3 text-sm"><div className="rounded bg-surface px-3 py-2 text-on-surface">总数 {batch.totalCount}</div><div className="rounded bg-surface px-3 py-2 text-on-surface">成功 {batch.successCount}</div><div className="rounded bg-surface px-3 py-2 text-on-surface">失败 {batch.failureCount}</div><div className="rounded bg-surface px-3 py-2 text-on-surface">事件 {batch.generatedEventCount}</div></div>{batch.errors.length > 0 ? <div className="mt-3 space-y-1 rounded bg-error-container px-3 py-2 text-sm text-error">{batch.errors.slice(0, 3).map((error) => <p key={`${batch.id}-${error.rowNumber}-${error.field}`}>{formatImportError(error)}</p>)}</div> : null}</div>)}</div>
         </div>
         <div className="rounded-lg border border-outline-variant bg-surface p-6">
           <h2 className="text-xl font-semibold text-on-surface">最新成功记录</h2>
-          <div className="mt-4 space-y-3">{currentRecords.slice(0, 6).map((record) => <div key={(record as { id: string }).id} className="rounded-lg bg-surface-container-low p-4"><div className="flex items-center justify-between gap-3"><p className="font-medium text-on-surface">{String(((record as unknown) as Record<string, unknown>).name ?? ((record as unknown) as Record<string, unknown>).equipmentName ?? '-')}</p><span className="text-xs text-on-surface-variant">{(record as { id: string }).id}</span></div><p className="mt-2 text-sm text-on-surface-variant">{columns.slice(1, 3).map((column) => `${column.label} ${String(((record as unknown) as Record<string, unknown>)[column.key] ?? '-')}`).join(' / ')}</p></div>)}</div>
+          <div className="mt-4 space-y-3">{recentSuccessfulRecords.map((record) => <div key={(record as { id: string }).id} className="rounded-lg bg-surface-container-low p-4"><div className="flex items-center justify-between gap-3"><p className="font-medium text-on-surface">{String(((record as unknown) as Record<string, unknown>).name ?? ((record as unknown) as Record<string, unknown>).equipmentName ?? '-')}</p><span className="text-xs text-on-surface-variant">{(record as { id: string }).id}</span></div><p className="mt-2 text-sm text-on-surface-variant">{columns.slice(1, 3).map((column) => `${column.label} ${String(((record as unknown) as Record<string, unknown>)[column.key] ?? '-')}`).join(' / ')}</p></div>)}</div>
         </div>
       </section>
     </div>

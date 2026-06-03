@@ -1,7 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useAI } from '../ai/AIStateLive'
+import { getNotificationItems, type NotificationItem } from '../ai/selectors'
 import { useRole } from '../auth/RoleContext'
 import AlertCornerChart from '../components/AlertCornerChart'
+import {
+  getUnreadNotificationCount,
+  markNotificationsAnnounced,
+  readNotificationAnnouncedIds,
+  subscribeNotificationReadState,
+} from '../notifications/state'
 import { getAuthBannerMessage } from '../runtime/httpErrorPresentation'
 import {
   clearHttpAuthToken,
@@ -24,6 +32,7 @@ const navItems: NavItem[] = [
   { path: '/chemicals', label: '化学品管理', icon: 'science' },
   { path: '/equipment', label: '仪器设备', icon: 'precision_manufacturing' },
   { path: '/ai-workbench', label: 'AI 工作台', icon: 'psychology' },
+  { path: '/notifications', label: '通知中心', icon: 'notifications' },
   { path: '/workflow-monitor', label: '工作流监控', icon: 'monitoring' },
   { path: '/settings', label: '系统设置', icon: 'settings' },
 ]
@@ -31,10 +40,20 @@ const navItems: NavItem[] = [
 export default function MainLayout() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { tasks, approvals, events, reports, reportDeliveryRecords, activityLogs } = useAI()
   const { role, setRole, can } = useRole()
   const [authUser, setAuthUser] = useState<HttpAuthUser | null>(() => readHttpAuthUser())
   const [authInvalidationReason, setAuthInvalidationReason] = useState<HttpAuthInvalidationReason | null>(
     () => readHttpAuthInvalidationReason(),
+  )
+  const [toastNotification, setToastNotification] = useState<NotificationItem | null>(null)
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
+  const didPrimeNotificationsRef = useRef(false)
+  const toastTimerRef = useRef<number | null>(null)
+
+  const notifications = useMemo(
+    () => getNotificationItems(tasks, approvals, events, reports, reportDeliveryRecords, activityLogs),
+    [activityLogs, approvals, events, reportDeliveryRecords, reports, tasks],
   )
   const visibleNavItems = navItems.filter((item) => {
     switch (item.path) {
@@ -71,6 +90,49 @@ export default function MainLayout() {
     })
   }, [setRole])
 
+  useEffect(() => {
+    const notificationIds = notifications.map((notification) => notification.id)
+    setUnreadNotificationCount(getUnreadNotificationCount(notificationIds))
+
+    if (!didPrimeNotificationsRef.current) {
+      markNotificationsAnnounced(notificationIds)
+      didPrimeNotificationsRef.current = true
+      return
+    }
+
+    const announcedIds = new Set(readNotificationAnnouncedIds())
+    const newNotifications = notifications.filter((notification) => !announcedIds.has(notification.id))
+    if (newNotifications.length === 0) return
+
+    const newestNotification = newNotifications[0]
+    setToastNotification(newestNotification)
+    playNotificationSound()
+    markNotificationsAnnounced(newNotifications.map((notification) => notification.id))
+
+    if (toastTimerRef.current) {
+      window.clearTimeout(toastTimerRef.current)
+    }
+    toastTimerRef.current = window.setTimeout(() => {
+      setToastNotification(null)
+      toastTimerRef.current = null
+    }, 5200)
+  }, [notifications])
+
+  useEffect(() => {
+    const notificationIds = notifications.map((notification) => notification.id)
+    return subscribeNotificationReadState(() => {
+      setUnreadNotificationCount(getUnreadNotificationCount(notificationIds))
+    })
+  }, [notifications])
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        window.clearTimeout(toastTimerRef.current)
+      }
+    }
+  }, [])
+
   const authBannerMessage = getAuthBannerMessage(authInvalidationReason)
   const currentUserLabel = authUser?.name || roleMeta[role].label
   const currentUserAccount = authUser?.username || roleMeta[role].email
@@ -102,7 +164,15 @@ export default function MainLayout() {
                     : 'text-on-surface hover:bg-surface-container-high'
                 }`}
               >
-                <span className="material-symbols-outlined text-xl">{item.icon}</span>
+                <span className="relative flex h-6 w-6 items-center justify-center">
+                  <span className="material-symbols-outlined text-xl">{item.icon}</span>
+                  {item.path === '/notifications' && unreadNotificationCount > 0 ? (
+                    <span
+                      className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full bg-error ring-2 ring-surface"
+                      aria-label="有未读通知"
+                    />
+                  ) : null}
+                </span>
                 <span>{item.label}</span>
               </Link>
             )
@@ -136,6 +206,9 @@ export default function MainLayout() {
       </aside>
 
       <main className="flex-1 overflow-auto">
+        {toastNotification ? (
+          <NotificationToast notification={toastNotification} onClose={() => setToastNotification(null)} />
+        ) : null}
         {authBannerMessage ? (
           <div className="border-b border-amber-200 bg-amber-50 px-6 py-3 text-sm text-amber-900">
             {authBannerMessage}
@@ -145,4 +218,75 @@ export default function MainLayout() {
       </main>
     </div>
   )
+}
+
+function NotificationToast({
+  notification,
+  onClose,
+}: {
+  notification: NotificationItem
+  onClose: () => void
+}) {
+  return (
+    <div className="fixed left-1/2 top-4 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-lg border border-outline-variant bg-surface px-4 py-3 shadow-xl">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-container">
+          <span className="material-symbols-outlined text-on-primary-container">notifications_active</span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-on-surface">{notification.title}</p>
+          <p className="mt-1 line-clamp-2 text-sm text-on-surface-variant">{notification.message}</p>
+          {notification.actionHref && notification.actionLabel ? (
+            <Link
+              to={notification.actionHref}
+              onClick={onClose}
+              className="mt-2 inline-flex text-sm font-medium text-primary"
+            >
+              {notification.actionLabel}
+            </Link>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
+          aria-label="关闭通知"
+        >
+          <span className="material-symbols-outlined text-lg">close</span>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function playNotificationSound() {
+  try {
+    const audioWindow = window as Window & {
+      AudioContext?: typeof AudioContext
+      webkitAudioContext?: typeof AudioContext
+    }
+    const AudioContextCtor = audioWindow.AudioContext || audioWindow.webkitAudioContext
+    if (!AudioContextCtor) return
+
+    const context = new AudioContextCtor()
+    const oscillator = context.createOscillator()
+    const gain = context.createGain()
+
+    oscillator.type = 'sine'
+    oscillator.frequency.setValueAtTime(880, context.currentTime)
+    oscillator.frequency.setValueAtTime(660, context.currentTime + 0.09)
+    gain.gain.setValueAtTime(0.0001, context.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.08, context.currentTime + 0.02)
+    gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.22)
+
+    oscillator.connect(gain)
+    gain.connect(context.destination)
+    oscillator.start()
+    oscillator.stop(context.currentTime + 0.24)
+    oscillator.onended = () => {
+      context.close().catch(() => undefined)
+    }
+  } catch {
+    // Browsers may block sound until the page has received a user gesture.
+  }
 }

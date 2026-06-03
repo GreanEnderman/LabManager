@@ -249,7 +249,7 @@ export class ImportService {
       })
     }
 
-    const duplicateKey = `${row.recordId ?? ''}|${name ?? ''}|${normalizeText(row.labName) ?? ''}`
+    const duplicateKey = `${row.recordId ?? ''}|${name ?? ''}`
     if (seenKeys.has(duplicateKey)) {
       errors.push({
         rowNumber,
@@ -330,7 +330,6 @@ export class ImportService {
       currentQuantity: row.currentQuantity,
       threshold,
       status,
-      labName: normalizeText(row.labName),
       ownerName: normalizeText(row.ownerName),
       updatedAt: normalizeText(row.updatedAt) ?? now,
       imageDataUrl: normalizeText(row.imageDataUrl),

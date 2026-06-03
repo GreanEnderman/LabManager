@@ -7,7 +7,7 @@ import type {
 } from '../../../backend/src/contracts/shared'
 import type { ApprovalDecision } from '../../../backend/src/domain/approval-state-machine'
 import type { TaskTransitionName } from '../../../backend/src/domain/task-state-machine'
-import type { AIGateway, CompletionReportInput } from './aiGateway'
+import type { AIGateway, CompletionReportInput, InventoryListOptions } from './aiGateway'
 import { getAiGateway } from './getAiGateway'
 import type {
   ChemicalImportRecord,
@@ -31,6 +31,52 @@ import type {
 
 const gateway: AIGateway = getAiGateway()
 
+function getImportErrorMessage(error: {
+  field?: string
+  code?: string
+  message?: string
+  error?: string
+  rawValue?: unknown
+  data?: unknown
+}) {
+  const rawMessage = String(error.message ?? error.error ?? '').trim()
+  const rawValue = error.rawValue ?? error.data
+  const lowerMessage = rawMessage.toLowerCase()
+
+  if (error.code === 'duplicate_record' || lowerMessage.includes('duplicate')) {
+    return '记录重复：这一行和本次导入中的其他行使用了相同的记录 ID 或名称，请删除重复行，或改成唯一的记录 ID。'
+  }
+
+  if (
+    error.code === 'invalid_number' ||
+    lowerMessage.includes('invalid input syntax') ||
+    lowerMessage.includes('not a valid number')
+  ) {
+    return '数字格式不正确：库存、阈值或数量只能填写数字，请删掉单位、空格或文字。'
+  }
+
+  if (lowerMessage.includes('null value') || lowerMessage.includes('not-null') || lowerMessage.includes('required')) {
+    if (error.field && error.field !== 'row') {
+      return `必填字段缺失：${error.field} 没有填写，请补全后重新导入。`
+    }
+    return '必填字段缺失：这一行缺少名称、状态、数量等必要信息，请补全后重新导入。'
+  }
+
+  if (lowerMessage.includes('date') || lowerMessage.includes('timestamp')) {
+    return '日期格式不正确：请使用 2026-06-03 或 2026-06-03 09:30:00 这类格式。'
+  }
+
+  if (lowerMessage.includes('chemical not found') || rawMessage.includes('未找到匹配的化学品')) {
+    return `物料未匹配库存：${String(rawValue ?? '').trim() || '该物料'} 不在当前化学品库存中，请把物料名称改成库存里的名称或记录 ID。`
+  }
+
+  if (rawMessage) {
+    return `导入失败：${rawMessage}`
+  }
+
+  return '导入失败：这一行没有成功写入，请检查必填字段、数字格式和是否重复。'
+}
+
 function getCurrentActor() {
   return {
     id: 'frontend-user',
@@ -39,18 +85,51 @@ function getCurrentActor() {
   }
 }
 
-function mapImportErrors(errors: Array<{ rowNumber: number; field: string; code: string; message: string; rawValue: unknown }>): ImportErrorItem[] {
+function mapImportErrors(errors: Array<{
+  rowNumber?: number
+  row?: number
+  field?: string
+  code?: string
+  message?: string
+  error?: string
+  rawValue?: unknown
+  data?: unknown
+}>): ImportErrorItem[] {
   return errors.map((error) => ({
-    rowNumber: error.rowNumber,
-    field: error.field,
+    rowNumber: error.rowNumber ?? (typeof error.row === 'number' ? error.row + 1 : 0),
+    field: error.field ?? 'row',
     code:
       error.code === 'required' || error.code === 'invalid_number' || error.code === 'duplicate_record'
         ? error.code
         : 'required',
-    message: error.message,
-    rawValue: error.rawValue,
+    message: error.message ?? error.error ?? '导入失败，未返回具体错误信息。',
+    rawValue: error.rawValue ?? error.data ?? null,
   }))
 }
+
+function mapReadableImportErrors(errors: Array<{
+  rowNumber?: number
+  row?: number
+  field?: string
+  code?: string
+  message?: string
+  error?: string
+  rawValue?: unknown
+  data?: unknown
+}>): ImportErrorItem[] {
+  return errors.map((error) => ({
+    rowNumber: error.rowNumber ?? (typeof error.row === 'number' ? error.row + 1 : 0),
+    field: error.field ?? 'row',
+    code:
+      error.code === 'required' || error.code === 'invalid_number' || error.code === 'duplicate_record'
+        ? error.code
+        : 'required',
+    message: getImportErrorMessage(error),
+    rawValue: error.rawValue ?? error.data ?? null,
+  }))
+}
+
+void mapImportErrors
 
 function mapBatch(batch: {
   id: string
@@ -65,7 +144,16 @@ function mapBatch(batch: {
   importedBy: { id: string; name: string; type: string }
   importedRecordIds: string[]
   generatedEventCount: number
-  errors: Array<{ rowNumber: number; field: string; code: string; message: string; rawValue: unknown }>
+  errors: Array<{
+    rowNumber?: number
+    row?: number
+    field?: string
+    code?: string
+    message?: string
+    error?: string
+    rawValue?: unknown
+    data?: unknown
+  }>
 }): ImportBatchRecord {
   return {
     id: batch.id,
@@ -80,7 +168,7 @@ function mapBatch(batch: {
     importedBy: batch.importedBy.name,
     importedRecordIds: batch.importedRecordIds,
     generatedEventCount: batch.generatedEventCount,
-    errors: mapImportErrors(batch.errors),
+    errors: mapReadableImportErrors(batch.errors),
   }
 }
 
@@ -93,7 +181,6 @@ function mapChemical(record: {
   currentQuantity: number
   threshold: number
   status: string
-  labName: string | null
   ownerName: string | null
   updatedAt: string
   imageDataUrl: string | null
@@ -106,9 +193,11 @@ function mapChemical(record: {
     category: record.category ?? '',
     spec: record.spec ?? '',
     currentQuantity: record.currentQuantity,
+    batchNumber: '',
+    openedAt: '',
+    expiryDate: '',
     threshold: record.threshold,
     status: record.status,
-    labName: record.labName ?? '',
     ownerName: record.ownerName ?? '',
     updatedAt: record.updatedAt,
     imageDataUrl: record.imageDataUrl ?? '',
@@ -254,6 +343,22 @@ function mapActionToLog(action: AITaskActionDTO): AIActivityLog {
 }
 
 function buildReportSections(report: AIReportDTO): AIReport['sections'] {
+  const sections = Array.isArray(report.metadata.sections) ? report.metadata.sections : []
+  const metadataSections = sections
+    .map((section) => {
+      if (!section || typeof section !== 'object') return null
+      const item = section as { title?: unknown; content?: unknown }
+      return {
+        title: String(item.title ?? '章节'),
+        content: String(item.content ?? ''),
+      }
+    })
+    .filter((section): section is NonNullable<typeof section> => Boolean(section))
+
+  if (metadataSections.length > 0) {
+    return metadataSections
+  }
+
   return [
     { title: '摘要', content: report.summary },
     { title: '重点条目', content: report.highlights.join('；') },
@@ -387,14 +492,14 @@ export const aiAppClient = {
   async updateSettings(patch: Partial<AISettings>) {
     return await gateway.updateSettings(patch)
   },
-  async listChemicals() {
-    return (await gateway.listChemicals()).map(mapChemical)
+  async listChemicals(options?: InventoryListOptions) {
+    return (await gateway.listChemicals(options)).map(mapChemical)
   },
   async deleteChemical(chemicalId: string) {
     await gateway.deleteChemical(chemicalId)
   },
-  async listEquipment() {
-    return (await gateway.listEquipment()).map(mapEquipment)
+  async listEquipment(options?: InventoryListOptions) {
+    return (await gateway.listEquipment(options)).map(mapEquipment)
   },
   async deleteEquipment(equipmentId: string) {
     await gateway.deleteEquipment(equipmentId)
@@ -424,7 +529,8 @@ export const aiAppClient = {
     unit: string
     operator: { id: string; name: string; type: string }
     reason: string
-    metadata: Record<string, any>
+    operationDate?: string
+    metadata: Record<string, unknown>
   }) {
     return await gateway.createInventoryOperation(operation)
   },

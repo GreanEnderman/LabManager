@@ -25,6 +25,7 @@ interface ImportContextValue {
   maintenanceRecords: MaintenanceImportRecord[]
   batches: ImportBatchRecord[]
   refreshChemicals(): Promise<void>
+  updateChemicalQuantity(update: { id: string; currentQuantity: number }): void
   deleteChemical(chemicalId: string): Promise<void>
   deleteEquipment(equipmentId: string): Promise<void>
   importChemicals(rows: ChemicalImportRecord[], source: ImportSource, fileName: string | null, importedBy: string): Promise<ImportBatchRecord>
@@ -109,6 +110,135 @@ function buildLocalBatch(params: {
   }
 }
 
+function mergeById<T extends { id: string }>(current: T[], nextItems: T[]) {
+  const nextById = new Map(nextItems.map((item) => [item.id, item]))
+  const merged = current.map((item) => nextById.get(item.id) ?? item)
+  const existingIds = new Set(current.map((item) => item.id))
+  return [...nextItems.filter((item) => !existingIds.has(item.id)), ...merged]
+}
+
+function validateMovementRows(rows: MovementImportRecord[]) {
+  const errors: ImportErrorItem[] = []
+  const validRows: MovementImportRecord[] = []
+  const requiredFields: Array<{ key: keyof MovementImportRecord; label: string }> = [
+    { key: 'date', label: '业务时间' },
+    { key: 'name', label: '物料名称' },
+    { key: 'type', label: '类型' },
+    { key: 'quantity', label: '数量' },
+    { key: 'operator', label: '经手人' },
+    { key: 'reason', label: '原因' },
+  ]
+
+  rows.forEach((row, index) => {
+    const rowNumber = index + 1
+    const missingField = requiredFields.find((field) => String(row[field.key] ?? '').trim() === '')
+    if (missingField) {
+      errors.push({
+        rowNumber,
+        field: missingField.key,
+        code: 'required',
+        message: `${missingField.label}不能为空`,
+        rawValue: row[missingField.key],
+      })
+      return
+    }
+
+    if (!normalizeMovementBusinessDate(row.date)) {
+      errors.push({
+        rowNumber,
+        field: 'date',
+        code: 'required',
+        message: '业务时间需至少填写完整年月日，时分秒可不填',
+        rawValue: row.date,
+      })
+      return
+    }
+
+    const quantity = Number(row.quantity)
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      errors.push({
+        rowNumber,
+        field: 'quantity',
+        code: 'invalid_number',
+        message: '数量必须是大于 0 的数字',
+        rawValue: row.quantity,
+      })
+      return
+    }
+
+    if (!normalizeMovementOperationType(row.type)) {
+      errors.push({
+        rowNumber,
+        field: 'type',
+        code: 'required',
+        message: '类型必须是入库或出库',
+        rawValue: row.type,
+      })
+      return
+    }
+
+    validRows.push(row)
+  })
+
+  return { validRows, errors }
+}
+
+function normalizeMovementBusinessDate(value: string) {
+  const normalized = value.trim().replace('T', ' ')
+  const match = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/)
+  if (!match) return null
+
+  const [, year, month, day, hour = '0', minute = '0', second = '0'] = match
+  const date = new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    Number(hour),
+    Number(minute),
+    Number(second),
+  )
+  if (
+    date.getFullYear() !== Number(year) ||
+    date.getMonth() !== Number(month) - 1 ||
+    date.getDate() !== Number(day) ||
+    date.getHours() !== Number(hour) ||
+    date.getMinutes() !== Number(minute) ||
+    date.getSeconds() !== Number(second)
+  ) {
+    return null
+  }
+
+  return `${year.padStart(4, '0')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:${second.padStart(2, '0')}`
+}
+
+function normalizeText(value: string) {
+  return value.trim().toLowerCase()
+}
+
+function normalizeMovementOperationType(type: string): 'inbound' | 'outbound' | null {
+  const normalized = normalizeText(type)
+  if (normalized === '入库' || normalized === 'inbound') return 'inbound'
+  if (normalized === '出库' || normalized === 'outbound') return 'outbound'
+  return null
+}
+
+function findChemicalForMovement(row: MovementImportRecord, chemicals: ChemicalImportRecord[]) {
+  const target = normalizeText(row.name)
+  return chemicals.find((chemical) => normalizeText(chemical.id) === target || normalizeText(chemical.name) === target)
+}
+
+function mapInventoryOperationToMovement(row: MovementImportRecord, operation: Awaited<ReturnType<typeof aiAppClient.createInventoryOperation>>['operation']): MovementImportRecord {
+  return {
+    id: operation.id,
+    date: operation.operationDate || row.date,
+    name: operation.entityName || row.name,
+    type: operation.operationType === 'inbound' ? '入库' : '出库',
+    quantity: String(operation.quantity),
+    operator: operation.operatorName || row.operator,
+    reason: operation.reason ?? row.reason,
+  }
+}
+
 export function ImportProvider({ children }: { children: ReactNode }) {
   const [chemicals, setChemicals] = useState<ChemicalImportRecord[]>([])
   const [equipment, setEquipment] = useState<EquipmentImportRecord[]>([])
@@ -120,6 +250,10 @@ export function ImportProvider({ children }: { children: ReactNode }) {
   const [localBatches, setLocalBatches] = useState<ImportBatchRecord[]>(() => readStorage(LOCAL_BATCHES_STORAGE_KEY, []))
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  async function refreshRemoteBatches() {
+    setRemoteBatches(await aiAppClient.listImportBatches().catch(() => []))
+  }
 
   async function refreshImports() {
     try {
@@ -178,6 +312,19 @@ export function ImportProvider({ children }: { children: ReactNode }) {
           console.warn('Failed to refresh chemicals:', error)
         }
       },
+      updateChemicalQuantity(update) {
+        setChemicals((current) =>
+          current.map((item) =>
+            item.id === update.id
+              ? {
+                  ...item,
+                  currentQuantity: update.currentQuantity,
+                  updatedAt: new Date().toISOString(),
+                }
+              : item,
+          ),
+        )
+      },
       async deleteChemical(chemicalId) {
         setIsSubmitting(true)
         try {
@@ -203,7 +350,9 @@ export function ImportProvider({ children }: { children: ReactNode }) {
         setIsSubmitting(true)
         try {
           const response = await aiAppClient.importChemicals(rows, source, fileName, importedBy)
-          await refreshImports()
+          setChemicals((current) => mergeById(current, response.records))
+          setRemoteBatches((current) => mergeById(current, [response.batch]))
+          await refreshRemoteBatches()
           return response.batch
         } finally {
           setIsSubmitting(false)
@@ -213,7 +362,9 @@ export function ImportProvider({ children }: { children: ReactNode }) {
         setIsSubmitting(true)
         try {
           const response = await aiAppClient.importEquipment(rows, source, fileName, importedBy)
-          await refreshImports()
+          setEquipment((current) => mergeById(current, response.records))
+          setRemoteBatches((current) => mergeById(current, [response.batch]))
+          await refreshRemoteBatches()
           return response.batch
         } finally {
           setIsSubmitting(false)
@@ -222,9 +373,71 @@ export function ImportProvider({ children }: { children: ReactNode }) {
       async importMovements(rows, source, fileName, importedBy) {
         setIsSubmitting(true)
         try {
+          const { validRows, errors } = validateMovementRows(rows)
+          const importedRows: MovementImportRecord[] = []
+
+          for (const [index, row] of validRows.entries()) {
+            const chemical = findChemicalForMovement(row, chemicals)
+            const operationType = normalizeMovementOperationType(row.type)
+
+            if (!chemical || !operationType) {
+              errors.push({
+                rowNumber: rows.indexOf(row) + 1 || index + 1,
+                field: !chemical ? 'name' : 'type',
+                code: 'required',
+                message: !chemical ? `未找到匹配的化学品：${row.name}` : '类型必须是入库或出库',
+                rawValue: !chemical ? row.name : row.type,
+              })
+              continue
+            }
+
+            try {
+              const operationDate = normalizeMovementBusinessDate(row.date)
+              const response = await aiAppClient.createInventoryOperation({
+                entityType: 'chemical',
+                entityId: chemical.id,
+                operationType,
+                quantity: Number(row.quantity),
+                unit: chemical.spec || '',
+                operator: {
+                  id: row.operator || importedBy,
+                  name: row.operator || importedBy,
+                  type: 'user',
+                },
+                reason: row.reason,
+                operationDate: operationDate ?? undefined,
+                metadata: {
+                  importRecordId: row.id,
+                  importSource: source,
+                  importFileName: fileName,
+                },
+              })
+              importedRows.push(mapInventoryOperationToMovement(row, response.operation))
+              setChemicals((current) =>
+                current.map((item) =>
+                  item.id === response.updatedEntity.id
+                    ? {
+                        ...item,
+                        currentQuantity: response.updatedEntity.currentQuantity,
+                        updatedAt: new Date().toISOString(),
+                      }
+                    : item,
+                ),
+              )
+            } catch (error) {
+              errors.push({
+                rowNumber: rows.indexOf(row) + 1 || index + 1,
+                field: 'name',
+                code: 'required',
+                message: error instanceof Error ? error.message : `出入库流水写入失败：${row.name}`,
+                rawValue: row.name,
+              })
+            }
+          }
+
           setMovements((current) => {
             const recordMap = new Map(current.map((item) => [item.id, item]))
-            rows.forEach((row) => recordMap.set(row.id, row))
+            importedRows.forEach((row) => recordMap.set(row.id, row))
             return [...recordMap.values()].sort((left, right) => right.date.localeCompare(left.date))
           })
           const batch = buildLocalBatch({
@@ -233,7 +446,8 @@ export function ImportProvider({ children }: { children: ReactNode }) {
             fileName,
             importedBy,
             totalCount: rows.length,
-            importedRecordIds: rows.map((row) => row.id),
+            importedRecordIds: importedRows.map((row) => row.id),
+            errors,
           })
           setLocalBatches((current) => [batch, ...current])
           return batch

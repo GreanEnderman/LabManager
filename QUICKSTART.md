@@ -25,6 +25,11 @@ python -m pip install -e ".[dev]"
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]"
 ```
+## 虚拟环境
+
+```bash
+python_backend\.venv\Scripts\activate
+```
 
 ## 启动 Redis
 

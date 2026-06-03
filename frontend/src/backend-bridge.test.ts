@@ -10,6 +10,16 @@ test('role capability bridge keeps write permissions for non-viewer roles', () =
   assert.equal(hasCapability('viewer', 'tasks:write'), false)
 })
 
+test('role capability bridge allows data entry for lab staff but not viewers', () => {
+  assert.equal(hasCapability('admin', 'imports:create'), true)
+  assert.equal(hasCapability('manager', 'imports:create'), true)
+  assert.equal(hasCapability('operator', 'imports:create'), true)
+  assert.equal(hasCapability('viewer', 'imports:create'), false)
+
+  assert.equal(hasCapability('operator', 'imports:read'), true)
+  assert.equal(hasCapability('viewer', 'imports:read'), false)
+})
+
 test('role capability bridge returns stable capability sets', () => {
   assert.deepEqual(getRoleCapabilities('viewer'), [
     'chemicals:read',

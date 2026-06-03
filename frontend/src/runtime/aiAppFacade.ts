@@ -21,7 +21,7 @@ import type {
 } from '../../../backend/src/contracts/shared'
 import type { ApprovalDecision } from '../../../backend/src/domain/approval-state-machine'
 import type { TaskTransitionName } from '../../../backend/src/domain/task-state-machine'
-import type { AIGateway } from './aiGateway'
+import type { AIGateway, InventoryListOptions } from './aiGateway'
 import { getAiGateway } from './getAiGateway'
 import type {
   ChemicalImportRecord,
@@ -104,7 +104,6 @@ function mapChemical(record: {
   currentQuantity: number
   threshold: number
   status: string
-  labName: string | null
   ownerName: string | null
   updatedAt: string
   imageDataUrl: string | null
@@ -117,9 +116,11 @@ function mapChemical(record: {
     category: record.category ?? '',
     spec: record.spec ?? '',
     currentQuantity: record.currentQuantity,
+    batchNumber: '',
+    openedAt: '',
+    expiryDate: '',
     threshold: record.threshold,
     status: record.status,
-    labName: record.labName ?? '',
     ownerName: record.ownerName ?? '',
     updatedAt: record.updatedAt,
     imageDataUrl: record.imageDataUrl ?? '',
@@ -264,6 +265,22 @@ function mapActionToLog(action: AITaskActionDTO): AIActivityLog {
 }
 
 function buildReportSections(report: AIReportDTO): AIReport['sections'] {
+  const sections = Array.isArray(report.metadata.sections) ? report.metadata.sections : []
+  const metadataSections = sections
+    .map((section) => {
+      if (!section || typeof section !== 'object') return null
+      const item = section as { title?: unknown; content?: unknown }
+      return {
+        title: String(item.title ?? '章节'),
+        content: String(item.content ?? ''),
+      }
+    })
+    .filter((section): section is NonNullable<typeof section> => Boolean(section))
+
+  if (metadataSections.length > 0) {
+    return metadataSections
+  }
+
   return [
     { title: '摘要', content: report.summary },
     { title: '重点条目', content: report.highlights.join('；') },
@@ -341,11 +358,11 @@ export const aiAppClient = {
   async updateSettings(patch: Partial<AISettings>) {
     return await gateway.updateSettings(patch)
   },
-  async listChemicals() {
-    return (await gateway.listChemicals()).map(mapChemical)
+  async listChemicals(options?: InventoryListOptions) {
+    return (await gateway.listChemicals(options)).map(mapChemical)
   },
-  async listEquipment() {
-    return (await gateway.listEquipment()).map(mapEquipment)
+  async listEquipment(options?: InventoryListOptions) {
+    return (await gateway.listEquipment(options)).map(mapEquipment)
   },
   async listImportBatches(entityType?: 'chemical' | 'equipment') {
     return (await gateway.listImportBatches(entityType ? { entityType } : undefined)).map(mapBatch)

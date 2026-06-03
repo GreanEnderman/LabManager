@@ -1,5 +1,7 @@
 ﻿import { useAI } from '../ai/AIStateLive'
 
+import { formatLocalDateTime } from '../runtime/dateTime'
+
 export default function AIReports() {
   const { reports, generateReport } = useAI()
 
@@ -34,7 +36,7 @@ export default function AIReports() {
                 {report.type === 'daily' ? '日报' : '周报'}
               </span>
             </div>
-            <p className="mb-4 text-sm text-on-surface-variant">{report.createdAt}</p>
+            <p className="mb-4 text-sm text-on-surface-variant">{formatLocalDateTime(report.createdAt)}</p>
             <div className="mb-4 rounded-lg bg-surface-container-low p-4 text-sm text-on-surface">
               {report.summary}
             </div>

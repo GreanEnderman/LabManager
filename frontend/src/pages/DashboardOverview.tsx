@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { dashboardApi, type DashboardOverview as DashboardData } from '../api/dashboard'
 
+import { formatLocalDateTime } from '../runtime/dateTime'
+
 export default function DashboardOverview() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [lowStockItems, setLowStockItems] = useState<Array<{ id: string; name: string; totalQuantity: number; image?: string | null }>>([])
@@ -87,7 +89,7 @@ export default function DashboardOverview() {
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
           <AISummaryCard title="待处理事件" value={String(aiOverview.eventCount)} icon="notifications_active" />
-          <AISummaryCard title="进行中任务" value={String(aiOverview.openTaskCount)} icon="task" />
+          <AISummaryCard title="未批准任务" value={String(aiOverview.openTaskCount)} icon="task" />
           <AISummaryCard title="待审批事项" value={String(aiOverview.pendingApprovalCount)} icon="approval" />
           <AISummaryCard title="已生成报告" value={String(aiOverview.reportCount)} icon="summarize" />
           <AISummaryCard title="高优任务" value={String(aiOverview.highPriorityTaskCount)} icon="timeline" />
@@ -156,7 +158,7 @@ export default function DashboardOverview() {
       </div>
 
       <div className="mt-6 text-sm text-on-surface-variant">
-        数据来源：实时从后端 API 获取 | 最后更新：{new Date(dashboardData.timestamp).toLocaleString('zh-CN')}
+        数据来源：实时从后端 API 获取 | 最后更新：{formatLocalDateTime(dashboardData.timestamp)}
       </div>
     </div>
   )
