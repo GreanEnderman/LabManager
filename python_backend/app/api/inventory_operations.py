@@ -20,6 +20,16 @@ def ok(data: Any) -> dict[str, Any]:
     return {"data": data, "error": None}
 
 
+def isoformat_for_frontend(value: Any) -> str:
+    """Serialize datetimes without incorrectly marking naive local times as UTC."""
+    if not hasattr(value, "isoformat"):
+        return str(value)
+    serialized = value.isoformat()
+    if serialized.endswith("+00:00"):
+        return serialized.replace("+00:00", "Z")
+    return serialized
+
+
 @router.post("/operations")
 async def create_inventory_operation(
     request: InventoryOperationRequest,
@@ -60,9 +70,7 @@ async def create_inventory_operation(
                     "unit": result.operation.unit,
                     "operatorName": result.operation.operator_name,
                     "reason": result.operation.reason,
-                    "operationDate": result.operation.operation_date.isoformat().replace(
-                        "+00:00", "Z"
-                    ),
+                    "operationDate": isoformat_for_frontend(result.operation.operation_date),
                     "metadata": result.operation.metadata,
                 },
                 "updatedEntity": {
@@ -139,7 +147,7 @@ async def list_inventory_transactions(
             for txn in transactions:
                 transactions_data.append({
                     "id": txn.id,
-                    "date": txn.movement_date.isoformat().replace("+00:00", "Z"),
+                    "date": isoformat_for_frontend(txn.movement_date),
                     "name": txn.entity_name,
                     "type": "入库" if txn.movement_type == "inbound" else "出库",
                     "quantity": str(txn.quantity),

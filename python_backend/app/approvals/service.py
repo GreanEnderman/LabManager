@@ -43,7 +43,7 @@ class ApprovalService:
             if not self._needs_human_intervention_approval(task):
                 continue
             existing = await get_latest_approval_for_task(self.conn, task.id)
-            if existing and existing.status in {"pending", "needs_info"}:
+            if existing:
                 continue
             await self.create_approval(
                 CreateApprovalRequest(

@@ -207,6 +207,61 @@ def test_approval_service_reuses_existing_unresolved_approval(monkeypatch) -> No
         assert recorded_actions == []
 
 
+def test_approval_backfill_does_not_recreate_after_resolved_approval(monkeypatch) -> None:
+    for status in ["approved", "rejected"]:
+        task = _make_task("open")
+        existing = _make_approval().model_copy(update={"status": status})
+        recorded_requests: list[CreateApprovalRequest] = []
+
+        async def fake_list_tasks(conn, query):
+            return [task]
+
+        async def fake_get_latest_approval_for_task(conn, task_id):
+            assert task_id == task.id
+            return existing
+
+        async def fake_create_approval(self, request):
+            recorded_requests.append(request)
+            return _make_approval()
+
+        monkeypatch.setattr("app.approvals.service.list_tasks", fake_list_tasks)
+        monkeypatch.setattr("app.approvals.service.get_latest_approval_for_task", fake_get_latest_approval_for_task)
+        monkeypatch.setattr(ApprovalService, "create_approval", fake_create_approval)
+
+        service = ApprovalService(conn=object())
+        created_count = asyncio.run(service.ensure_required_task_approvals())
+
+        assert created_count == 0
+        assert recorded_requests == []
+
+
+def test_approval_backfill_creates_when_required_task_has_no_approval(monkeypatch) -> None:
+    task = _make_task("open")
+    recorded_requests: list[CreateApprovalRequest] = []
+
+    async def fake_list_tasks(conn, query):
+        return [task]
+
+    async def fake_get_latest_approval_for_task(conn, task_id):
+        assert task_id == task.id
+        return None
+
+    async def fake_create_approval(self, request):
+        recorded_requests.append(request)
+        return _make_approval()
+
+    monkeypatch.setattr("app.approvals.service.list_tasks", fake_list_tasks)
+    monkeypatch.setattr("app.approvals.service.get_latest_approval_for_task", fake_get_latest_approval_for_task)
+    monkeypatch.setattr(ApprovalService, "create_approval", fake_create_approval)
+
+    service = ApprovalService(conn=object())
+    created_count = asyncio.run(service.ensure_required_task_approvals())
+
+    assert created_count == 1
+    assert recorded_requests[0].task_id == task.id
+    assert recorded_requests[0].metadata == {"source": "approval_backfill"}
+
+
 def test_human_intervention_events_require_approval() -> None:
     assert EventMappings.requires_approval("low_stock")
     assert EventMappings.requires_approval("maintenance_overdue")

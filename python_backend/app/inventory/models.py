@@ -32,6 +32,9 @@ class InventoryOperationRequest(BaseModel):
     unit: str = Field(default="瓶", description="Unit of measurement")
     operator: ActorInfo = Field(..., description="Operator information")
     reason: str | None = Field(None, description="Reason for the operation")
+    operation_date: datetime | None = Field(
+        None, description="Business timestamp for the operation", alias="operationDate"
+    )
     metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional metadata (e.g., batchNumber, expiryDate)"
     )

@@ -77,15 +77,17 @@ class InventoryService:
             batch_number = request.metadata.get("batchNumber")
             expiry_date = request.metadata.get("expiryDate")
 
-            await self.conn.execute(
+            result = await self.conn.execute(
                 """
                 INSERT INTO inventory_movements (
                     id, chemical_id, movement_type, quantity, unit,
                     operator_name, reason, batch_number, expiry_date,
                     movement_date, metadata
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, now(), %s::jsonb
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, COALESCE(%s, now()), %s::jsonb
                 )
+                RETURNING id, chemical_id, movement_type, quantity, unit,
+                          operator_name, reason, movement_date, metadata
                 """,
                 (
                     movement_id,
@@ -97,9 +99,11 @@ class InventoryService:
                     request.reason,
                     batch_number,
                     expiry_date,
+                    request.operation_date,
                     json.dumps(request.metadata),
                 )
             )
+            movement = await result.fetchone()
 
             # 5. Update chemical quantity
             result = await self.conn.execute(
@@ -125,19 +129,7 @@ class InventoryService:
                 "previous_quantity": updated[3],
             }
 
-            # 6. Fetch the created movement record
-            result = await self.conn.execute(
-                """
-                SELECT id, chemical_id, movement_type, quantity, unit,
-                       operator_name, reason, movement_date, metadata
-                FROM inventory_movements
-                WHERE id = %s
-                """,
-                (movement_id,)
-            )
-            movement = await result.fetchone()
-
-            # Convert to dict
+            # 6. Convert the inserted movement record to dict
             movement_dict = {
                 "id": movement[0],
                 "chemical_id": movement[1],
@@ -265,7 +257,7 @@ class InventoryService:
             """
             SELECT id, name, cas_number, category, spec,
                    current_quantity, threshold, unit, status,
-                   lab_name, owner_name, location, image_data_url,
+                   owner_name, location, image_data_url,
                    remark, created_at, updated_at, metadata
             FROM chemicals
             ORDER BY updated_at DESC
@@ -284,14 +276,13 @@ class InventoryService:
                 "threshold": row[6],
                 "unit": row[7],
                 "status": row[8],
-                "labName": row[9],
-                "ownerName": row[10],
-                "location": row[11],
-                "imageDataUrl": row[12],
-                "remark": row[13],
-                "createdAt": row[14].isoformat() if row[14] else None,
-                "updatedAt": row[15].isoformat() if row[15] else None,
-                "metadata": row[16],
+                "ownerName": row[9],
+                "location": row[10],
+                "imageDataUrl": row[11],
+                "remark": row[12],
+                "createdAt": row[13].isoformat() if row[13] else None,
+                "updatedAt": row[14].isoformat() if row[14] else None,
+                "metadata": row[15],
             }
             chemicals.append(chemical)
 
@@ -350,61 +341,73 @@ class InventoryService:
             try:
                 chemical_id = row.get("recordId") or f"chem-{uuid4()}"
 
-                # Upsert chemical
-                await self.conn.execute(
-                    """
-                    INSERT INTO chemicals (
-                        id, name, cas_number, category, spec,
-                        current_quantity, threshold, unit, status,
-                        lab_name, owner_name, location, image_data_url,
-                        remark, metadata
-                    ) VALUES (
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb
+                async with self.conn.transaction():
+                    await self.conn.execute(
+                        """
+                        INSERT INTO chemicals (
+                            id, name, cas_number, category, spec,
+                            current_quantity, threshold, unit, status,
+                            lab_name, owner_name, location, image_data_url,
+                            remark, metadata
+                        ) VALUES (
+                            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb
+                        )
+                        ON CONFLICT (id) DO UPDATE SET
+                            name = EXCLUDED.name,
+                            cas_number = EXCLUDED.cas_number,
+                            category = EXCLUDED.category,
+                            spec = EXCLUDED.spec,
+                            current_quantity = EXCLUDED.current_quantity,
+                            threshold = EXCLUDED.threshold,
+                            unit = EXCLUDED.unit,
+                            status = EXCLUDED.status,
+                            lab_name = EXCLUDED.lab_name,
+                            owner_name = EXCLUDED.owner_name,
+                            location = EXCLUDED.location,
+                            image_data_url = EXCLUDED.image_data_url,
+                            remark = EXCLUDED.remark,
+                            metadata = EXCLUDED.metadata,
+                            updated_at = now()
+                        """,
+                        (
+                            chemical_id,
+                            row.get("name"),
+                            row.get("casNumber"),
+                            row.get("category"),
+                            row.get("spec"),
+                            row.get("currentQuantity", 0),
+                            row.get("threshold", 5),
+                            row.get("unit", "瓶"),
+                            row.get("status", "正常"),
+                            None,
+                            row.get("ownerName"),
+                            row.get("location"),
+                            row.get("imageDataUrl"),
+                            row.get("remark"),
+                            json.dumps(row.get("metadata", {})),
+                        )
                     )
-                    ON CONFLICT (id) DO UPDATE SET
-                        name = EXCLUDED.name,
-                        cas_number = EXCLUDED.cas_number,
-                        category = EXCLUDED.category,
-                        spec = EXCLUDED.spec,
-                        current_quantity = EXCLUDED.current_quantity,
-                        threshold = EXCLUDED.threshold,
-                        unit = EXCLUDED.unit,
-                        status = EXCLUDED.status,
-                        lab_name = EXCLUDED.lab_name,
-                        owner_name = EXCLUDED.owner_name,
-                        location = EXCLUDED.location,
-                        image_data_url = EXCLUDED.image_data_url,
-                        remark = EXCLUDED.remark,
-                        metadata = EXCLUDED.metadata,
-                        updated_at = now()
-                    """,
-                    (
-                        chemical_id,
-                        row.get("name"),
-                        row.get("casNumber"),
-                        row.get("category"),
-                        row.get("spec"),
-                        row.get("currentQuantity", 0),
-                        row.get("threshold", 5),
-                        row.get("unit", "瓶"),
-                        row.get("status", "正常"),
-                        row.get("labName"),
-                        row.get("ownerName"),
-                        row.get("location"),
-                        row.get("imageDataUrl"),
-                        row.get("remark"),
-                        json.dumps(row.get("metadata", {})),
-                    )
+
+                imported.append(
+                    {
+                        "id": chemical_id,
+                        "name": row.get("name"),
+                        "casNumber": row.get("casNumber"),
+                        "category": row.get("category"),
+                        "spec": row.get("spec"),
+                        "currentQuantity": row.get("currentQuantity", 0),
+                        "threshold": row.get("threshold", 5),
+                        "unit": row.get("unit", "瓶"),
+                        "status": row.get("status", "正常"),
+                        "ownerName": row.get("ownerName"),
+                        "imageDataUrl": row.get("imageDataUrl"),
+                        "remark": row.get("remark"),
+                        "updatedAt": datetime.utcnow().isoformat(),
+                        "metadata": row.get("metadata", {}),
+                    }
                 )
 
-                # 提交每条记录的事务
-                await self.conn.commit()
-
-                imported.append({"id": chemical_id, "name": row.get("name")})
-
             except Exception as e:
-                # 回滚失败的事务
-                await self.conn.rollback()
                 errors.append({
                     "row": idx,
                     "error": str(e),
@@ -464,64 +467,79 @@ class InventoryService:
                 next_maintenance_at = parse_date(row.get("nextMaintenanceAt"))
                 purchase_date = parse_date(row.get("purchaseDate"))
 
-                # Upsert equipment
-                await self.conn.execute(
-                    """
-                    INSERT INTO equipment (
-                        id, name, vendor, model, serial_number, status,
-                        lab_name, owner_name, location, purchase_date,
-                        last_maintenance_at, next_maintenance_at,
-                        maintenance_interval_days, image_data_url,
-                        remark, metadata
-                    ) VALUES (
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb
+                async with self.conn.transaction():
+                    await self.conn.execute(
+                        """
+                        INSERT INTO equipment (
+                            id, name, vendor, model, serial_number, status,
+                            lab_name, owner_name, location, purchase_date,
+                            last_maintenance_at, next_maintenance_at,
+                            maintenance_interval_days, image_data_url,
+                            remark, metadata
+                        ) VALUES (
+                            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb
+                        )
+                        ON CONFLICT (id) DO UPDATE SET
+                            name = EXCLUDED.name,
+                            vendor = EXCLUDED.vendor,
+                            model = EXCLUDED.model,
+                            serial_number = EXCLUDED.serial_number,
+                            status = EXCLUDED.status,
+                            lab_name = EXCLUDED.lab_name,
+                            owner_name = EXCLUDED.owner_name,
+                            location = EXCLUDED.location,
+                            purchase_date = EXCLUDED.purchase_date,
+                            last_maintenance_at = EXCLUDED.last_maintenance_at,
+                            next_maintenance_at = EXCLUDED.next_maintenance_at,
+                            maintenance_interval_days = EXCLUDED.maintenance_interval_days,
+                            image_data_url = EXCLUDED.image_data_url,
+                            remark = EXCLUDED.remark,
+                            metadata = EXCLUDED.metadata,
+                            updated_at = now()
+                        """,
+                        (
+                            equipment_id,
+                            row.get("name"),
+                            row.get("vendor"),
+                            row.get("model"),
+                            row.get("serialNumber"),
+                            row.get("status", "正常"),
+                            row.get("labName"),
+                            row.get("ownerName"),
+                            row.get("location"),
+                            purchase_date,
+                            last_maintenance_at,
+                            next_maintenance_at,
+                            row.get("maintenanceIntervalDays", 180),
+                            row.get("imageDataUrl"),
+                            row.get("remark"),
+                            json.dumps(row.get("metadata", {})),
+                        )
                     )
-                    ON CONFLICT (id) DO UPDATE SET
-                        name = EXCLUDED.name,
-                        vendor = EXCLUDED.vendor,
-                        model = EXCLUDED.model,
-                        serial_number = EXCLUDED.serial_number,
-                        status = EXCLUDED.status,
-                        lab_name = EXCLUDED.lab_name,
-                        owner_name = EXCLUDED.owner_name,
-                        location = EXCLUDED.location,
-                        purchase_date = EXCLUDED.purchase_date,
-                        last_maintenance_at = EXCLUDED.last_maintenance_at,
-                        next_maintenance_at = EXCLUDED.next_maintenance_at,
-                        maintenance_interval_days = EXCLUDED.maintenance_interval_days,
-                        image_data_url = EXCLUDED.image_data_url,
-                        remark = EXCLUDED.remark,
-                        metadata = EXCLUDED.metadata,
-                        updated_at = now()
-                    """,
-                    (
-                        equipment_id,
-                        row.get("name"),
-                        row.get("vendor"),
-                        row.get("model"),
-                        row.get("serialNumber"),
-                        row.get("status", "正常"),
-                        row.get("labName"),
-                        row.get("ownerName"),
-                        row.get("location"),
-                        purchase_date,
-                        last_maintenance_at,
-                        next_maintenance_at,
-                        row.get("maintenanceIntervalDays", 180),
-                        row.get("imageDataUrl"),
-                        row.get("remark"),
-                        json.dumps(row.get("metadata", {})),
-                    )
+
+                imported.append(
+                    {
+                        "id": equipment_id,
+                        "name": row.get("name"),
+                        "vendor": row.get("vendor"),
+                        "model": row.get("model"),
+                        "serialNumber": row.get("serialNumber"),
+                        "status": row.get("status", "正常"),
+                        "labName": row.get("labName"),
+                        "ownerName": row.get("ownerName"),
+                        "location": row.get("location"),
+                        "purchaseDate": purchase_date,
+                        "lastMaintenanceAt": last_maintenance_at,
+                        "nextMaintenanceAt": next_maintenance_at,
+                        "maintenanceIntervalDays": row.get("maintenanceIntervalDays", 180),
+                        "imageDataUrl": row.get("imageDataUrl"),
+                        "remark": row.get("remark"),
+                        "updatedAt": datetime.utcnow().isoformat(),
+                        "metadata": row.get("metadata", {}),
+                    }
                 )
 
-                # 提交每条记录的事务
-                await self.conn.commit()
-
-                imported.append({"id": equipment_id, "name": row.get("name")})
-
             except Exception as e:
-                # 回滚失败的事务
-                await self.conn.rollback()
                 errors.append({
                     "row": idx,
                     "error": str(e),

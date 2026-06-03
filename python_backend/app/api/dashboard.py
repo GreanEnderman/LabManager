@@ -4,6 +4,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Dict, Any
 
 from app.db.postgres import get_db_connection
+from app.inventory.thresholds import get_effective_chemical_threshold
+from app.settings.service import SettingsService
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -19,15 +21,33 @@ async def get_dashboard_overview() -> Dict[str, Any]:
     """
 
     async with get_db_connection() as conn:
+        settings_service = SettingsService(conn)
+        ai_settings = await settings_service.get_settings()
+
         async with conn.cursor() as cur:
             # Query chemical stats
             await cur.execute("SELECT COUNT(*) FROM chemicals")
             chemical_count = (await cur.fetchone())[0]
 
             await cur.execute(
-                "SELECT COUNT(*) FROM chemicals WHERE current_quantity <= threshold"
+                """
+                SELECT id, name, current_quantity, threshold
+                FROM chemicals
+                WHERE status != 'deleted'
+                """
             )
-            low_stock_count = (await cur.fetchone())[0]
+            chemical_rows = await cur.fetchall()
+            low_stock_count = len(
+                [
+                    row
+                    for row in chemical_rows
+                    if float(row[2] or 0)
+                    <= get_effective_chemical_threshold(
+                        {"id": row[0], "name": row[1], "currentQuantity": row[2], "threshold": row[3]},
+                        ai_settings.thresholds,
+                    )
+                ]
+            )
 
             # Query movement stats
             await cur.execute(
@@ -119,16 +139,17 @@ async def get_dashboard_overview() -> Dict[str, Any]:
 async def get_low_stock_chemicals(limit: int = 4) -> Dict[str, Any]:
     """Get low stock chemicals for dashboard display."""
     async with get_db_connection() as conn:
+        settings_service = SettingsService(conn)
+        ai_settings = await settings_service.get_settings()
+
         async with conn.cursor() as cur:
             await cur.execute(
                 """
                 SELECT id, name, current_quantity, threshold, image_data_url
                 FROM chemicals
-                WHERE current_quantity <= threshold
+                WHERE status != 'deleted'
                 ORDER BY current_quantity ASC
-                LIMIT %s
-                """,
-                (limit,)
+                """
             )
             rows = await cur.fetchall()
 
@@ -137,11 +158,20 @@ async def get_low_stock_chemicals(limit: int = 4) -> Dict[str, Any]:
                     "id": row[0],
                     "name": row[1],
                     "totalQuantity": row[2],
-                    "threshold": row[3],
+                    "threshold": effective_threshold,
                     "image": row[4],
                 }
                 for row in rows
-            ]
+                if (
+                    float(row[2] or 0)
+                    <= (
+                        effective_threshold := get_effective_chemical_threshold(
+                            {"id": row[0], "name": row[1], "currentQuantity": row[2], "threshold": row[3]},
+                            ai_settings.thresholds,
+                        )
+                    )
+                )
+            ][:limit]
 
     return {"data": data}
 
