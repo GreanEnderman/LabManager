@@ -88,6 +88,15 @@ def ok(data: Any) -> dict[str, Any]:
     return {"data": data, "error": None}
 
 
+def isoformat_for_frontend(value: Any) -> str:
+    if not hasattr(value, "isoformat"):
+        return str(value)
+    serialized = value.isoformat()
+    if serialized.endswith("+00:00"):
+        return serialized.replace("+00:00", "Z")
+    return serialized
+
+
 def capability_target(capability: Capability) -> str:
     return get_capability_target(capability).value
 
@@ -134,7 +143,6 @@ _chemicals: list[dict[str, Any]] = [
         "threshold": 10,
         "unit": "kg",
         "status": "low_stock",
-        "labName": "Chemistry Lab",
         "ownerName": "Lab Manager",
         "imageDataUrl": None,
         "remark": "Common salt for general use",
@@ -170,7 +178,7 @@ _tasks: list[dict[str, Any]] = [
         "id": "task-compat-001",
         "eventId": "event-low-stock-chem-001",
         "type": "chemical_purchase",
-        "title": "閲囪喘鑽搧",
+        "title": "采购药品",
         "summary": "Chemical inventory is below the configured threshold.",
         "recommendation": "Review recent usage and create a chemical purchase request.",
         "status": "open",
@@ -1109,7 +1117,7 @@ async def patch_ai_settings(request: Request) -> dict[str, Any]:
 
 
 @router.get("/chemicals")
-async def chemicals() -> dict[str, Any]:
+async def chemicals(includeImages: bool = True) -> dict[str, Any]:
     capability_target(Capability.INVENTORY)
     settings = get_settings()
 
@@ -1117,12 +1125,13 @@ async def chemicals() -> dict[str, Any]:
     if settings.database_url:
         async with get_db_connection() as conn:
             async with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
-                await cur.execute("""
+                image_select = 'image_data_url as "imageDataUrl"' if includeImages else 'NULL as "imageDataUrl"'
+                await cur.execute(f"""
                     SELECT
                         id, name, cas_number as "casNumber", category, spec,
                         current_quantity as "currentQuantity", threshold, unit, status,
-                        lab_name as "labName", owner_name as "ownerName",
-                        image_data_url as "imageDataUrl", remark,
+                        owner_name as "ownerName",
+                        {image_select}, remark,
                         updated_at as "updatedAt", metadata
                     FROM chemicals
                     ORDER BY updated_at DESC
@@ -1171,7 +1180,7 @@ async def delete_chemical(chemical_id: str) -> dict[str, Any]:
 
 
 @router.get("/equipment")
-async def equipment() -> dict[str, Any]:
+async def equipment(includeImages: bool = True) -> dict[str, Any]:
     capability_target(Capability.INVENTORY)
     settings = get_settings()
 
@@ -1179,7 +1188,8 @@ async def equipment() -> dict[str, Any]:
     if settings.database_url:
         async with get_db_connection() as conn:
             async with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
-                await cur.execute("""
+                image_select = 'image_data_url as "imageDataUrl"' if includeImages else 'NULL as "imageDataUrl"'
+                await cur.execute(f"""
                     SELECT
                         id, name, vendor, model, serial_number as "serialNumber", status,
                         lab_name as "labName", owner_name as "ownerName", location,
@@ -1187,7 +1197,7 @@ async def equipment() -> dict[str, Any]:
                         last_maintenance_at as "lastMaintenanceAt",
                         next_maintenance_at as "nextMaintenanceAt",
                         maintenance_interval_days as "maintenanceIntervalDays",
-                        image_data_url as "imageDataUrl", remark,
+                        {image_select}, remark,
                         updated_at as "updatedAt", metadata
                     FROM equipment
                     ORDER BY updated_at DESC
@@ -1308,7 +1318,7 @@ async def inventory_transactions(
                 txn = dict(row)
                 # Convert datetime to ISO string
                 if txn.get("date"):
-                    txn["date"] = txn["date"].isoformat().replace("+00:00", "Z")
+                    txn["date"] = isoformat_for_frontend(txn["date"])
                 if txn.get("expiryDate"):
                     txn["expiryDate"] = txn["expiryDate"].isoformat() if hasattr(txn["expiryDate"], "isoformat") else str(txn["expiryDate"])
                 transactions.append(txn)
@@ -1383,49 +1393,48 @@ async def import_chemicals(request: Request) -> dict[str, Any]:
     rows = payload.get("rows", [])
 
     async with get_db_connection() as conn:
-        service = InventoryService(conn)
-        imported, errors = await service.import_chemicals(rows)
+        async with conn.transaction():
+            service = InventoryService(conn)
+            imported, errors = await service.import_chemicals(rows)
 
-        # Build records for batch response
-        records = [{"id": rec["id"], "name": rec["name"]} for rec in imported]
+            records = imported
 
-        # 淇濆瓨瀵煎叆鎵规鍒版暟鎹簱
-        batch_id = f"batch-{uuid4()}"
-        imported_by_data = payload.get("importedBy") or {}
-        imported_record_ids = [record["id"] for record in records]
+            # 淇濆瓨瀵煎叆鎵规鍒版暟鎹簱
+            batch_id = f"batch-{uuid4()}"
+            imported_by_data = payload.get("importedBy") or {}
+            imported_record_ids = [record["id"] for record in records]
 
-        await conn.execute(
-            """
-            INSERT INTO import_jobs (
-                id, entity_type, source, file_name, status,
-                total_count, success_count, failure_count,
-                imported_by, created_at, completed_at,
-                imported_record_ids, rule_inspection_triggered,
-                generated_event_count, errors, metadata
-            ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            await conn.execute(
+                """
+                INSERT INTO import_jobs (
+                    id, entity_type, source, file_name, status,
+                    total_count, success_count, failure_count,
+                    imported_by, created_at, completed_at,
+                    imported_record_ids, rule_inspection_triggered,
+                    generated_event_count, errors, metadata
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                )
+                """,
+                (
+                    batch_id,
+                    "chemical",
+                    payload.get("source", "manual"),
+                    payload.get("fileName"),
+                    "completed",
+                    len(rows),
+                    len(imported),
+                    len(errors),
+                    json.dumps(imported_by_data),
+                    now_dt,
+                    now_dt,
+                    json.dumps(imported_record_ids),
+                    False,
+                    0,
+                    json.dumps([{"row": e.get("row"), "error": str(e.get("error"))} for e in errors]),
+                    json.dumps({})
+                )
             )
-            """,
-            (
-                batch_id,
-                "chemical",
-                payload.get("source", "manual"),
-                payload.get("fileName"),
-                "completed",
-                len(rows),
-                len(imported),
-                len(errors),
-                json.dumps(imported_by_data),
-                now_dt,
-                now_dt,
-                json.dumps(imported_record_ids),
-                False,
-                0,
-                json.dumps([{"row": e.get("row"), "error": str(e.get("error"))} for e in errors]),
-                json.dumps({})
-            )
-        )
-        await conn.commit()
 
         batch = {
             "id": batch_id,
@@ -1486,58 +1495,57 @@ async def import_equipment(request: Request) -> dict[str, Any]:
     logger.info("=" * 50)
 
     async with get_db_connection() as conn:
-        service = InventoryService(conn)
-        imported, errors = await service.import_equipment(rows)
+        async with conn.transaction():
+            service = InventoryService(conn)
+            imported, errors = await service.import_equipment(rows)
 
-        # 娣诲姞瀵煎叆缁撴灉鏃ュ織
-        logger.info("[DEBUG] 瀵煎叆缁撴灉:")
-        logger.info(f"  - 鎴愬姛: {len(imported)}")
-        logger.info(f"  - 澶辫触: {len(errors)}")
-        if errors:
-            # 鍙褰曢敊璇殑琛屽彿鍜岄敊璇俊鎭紝涓嶈褰曞畬鏁存暟鎹?            error_summary = [{"row": e.get("row"), "error": str(e.get("error"))[:100]} for e in errors[:3]]
-            logger.error(f"  - 閿欒鎽樿: {error_summary}")
-        logger.info("=" * 50)
+            # 娣诲姞瀵煎叆缁撴灉鏃ュ織
+            logger.info("[DEBUG] 瀵煎叆缁撴灉:")
+            logger.info(f"  - 鎴愬姛: {len(imported)}")
+            logger.info(f"  - 澶辫触: {len(errors)}")
+            if errors:
+                # 鍙褰曢敊璇殑琛屽彿鍜岄敊璇俊鎭紝涓嶈褰曞畬鏁存暟鎹?            error_summary = [{"row": e.get("row"), "error": str(e.get("error"))[:100]} for e in errors[:3]]
+                logger.error(f"  - 閿欒鎽樿: {error_summary}")
+            logger.info("=" * 50)
 
-        # Build records for batch response
-        records = [{"id": rec["id"], "name": rec["name"]} for rec in imported]
+            records = imported
 
-        # 淇濆瓨瀵煎叆鎵规鍒版暟鎹簱
-        batch_id = f"batch-{uuid4()}"
-        imported_by_data = payload.get("importedBy") or {}
-        imported_record_ids = [record["id"] for record in records]
+            # 淇濆瓨瀵煎叆鎵规鍒版暟鎹簱
+            batch_id = f"batch-{uuid4()}"
+            imported_by_data = payload.get("importedBy") or {}
+            imported_record_ids = [record["id"] for record in records]
 
-        await conn.execute(
-            """
-            INSERT INTO import_jobs (
-                id, entity_type, source, file_name, status,
-                total_count, success_count, failure_count,
-                imported_by, created_at, completed_at,
-                imported_record_ids, rule_inspection_triggered,
-                generated_event_count, errors, metadata
-            ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            await conn.execute(
+                """
+                INSERT INTO import_jobs (
+                    id, entity_type, source, file_name, status,
+                    total_count, success_count, failure_count,
+                    imported_by, created_at, completed_at,
+                    imported_record_ids, rule_inspection_triggered,
+                    generated_event_count, errors, metadata
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                )
+                """,
+                (
+                    batch_id,
+                    "equipment",
+                    payload.get("source", "manual"),
+                    payload.get("fileName"),
+                    "completed",
+                    len(rows),
+                    len(imported),
+                    len(errors),
+                    json.dumps(imported_by_data),
+                    now_dt,  # 浣跨敤 datetime 瀵硅薄
+                    now_dt,  # 浣跨敤 datetime 瀵硅薄
+                    json.dumps(imported_record_ids),
+                    False,
+                    0,
+                    json.dumps([{"row": e.get("row"), "error": str(e.get("error"))} for e in errors]),
+                    json.dumps({})
+                )
             )
-            """,
-            (
-                batch_id,
-                "equipment",
-                payload.get("source", "manual"),
-                payload.get("fileName"),
-                "completed",
-                len(rows),
-                len(imported),
-                len(errors),
-                json.dumps(imported_by_data),
-                now_dt,  # 浣跨敤 datetime 瀵硅薄
-                now_dt,  # 浣跨敤 datetime 瀵硅薄
-                json.dumps(imported_record_ids),
-                False,
-                0,
-                json.dumps([{"row": e.get("row"), "error": str(e.get("error"))} for e in errors]),
-                json.dumps({})
-            )
-        )
-        await conn.commit()
 
         batch = {
             "id": batch_id,

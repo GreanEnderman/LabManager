@@ -4,6 +4,7 @@ from datetime import date, datetime, time, timedelta, timezone
 from typing import Any
 
 from app.core.logging import get_logger
+from app.inventory.thresholds import as_number, get_effective_chemical_threshold
 from app.tasks.celery_app import celery_app
 
 logger = get_logger(__name__)
@@ -46,6 +47,7 @@ def scan_and_execute_rules():
             TaskServiceTaskTool,
         )
         from app.rules.engine import RulesEngine
+        from app.settings.service import SettingsService
 
         settings = get_settings()
         if not settings.database_url:
@@ -84,14 +86,17 @@ def scan_and_execute_rules():
                 )
                 equipment = await cur.fetchall()
 
+            settings_service = SettingsService(conn)
+            ai_settings = await settings_service.get_settings()
+
         logger.info("Loaded %s chemicals, %s equipment", len(chemicals), len(equipment))
 
         events: list[dict[str, Any]] = []
         now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
         for chem in chemicals:
-            current_qty = chem.get("currentQuantity") or 0
-            threshold = chem.get("threshold") or 0
+            current_qty = as_number(chem.get("currentQuantity"))
+            threshold = get_effective_chemical_threshold(chem, ai_settings.thresholds)
             if current_qty <= threshold:
                 events.append(
                     {
