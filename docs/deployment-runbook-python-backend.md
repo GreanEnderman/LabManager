@@ -27,6 +27,14 @@ This runbook deploys the React frontend and `python_backend/` FastAPI service to
    ```
 
    Fill real values in `deploy/env.production`. Do not commit this file.
+   Keep the formal workflow routing flags enabled in production so the frontend
+   task list reads the same persisted task data that `rules.scan_and_execute` writes:
+
+   ```env
+   LABMANAGER_PY_PY_BACKEND_RULES_ENABLED=true
+   LABMANAGER_PY_PY_BACKEND_TASKS_ENABLED=true
+   LABMANAGER_PY_PY_BACKEND_APPROVALS_ENABLED=true
+   ```
 
 3. Start PostgreSQL and Redis first when using Compose-local dependencies.
 
@@ -47,7 +55,11 @@ This runbook deploys the React frontend and `python_backend/` FastAPI service to
 
    ```bash
    docker compose -f docker-compose.prod.yml up -d --build
+   curl http://localhost:8004/api/ai/routing/validate
    ```
+
+   Confirm `rules`, `tasks`, and `approvals` resolve to `python` instead of
+   `compat_fallback` before verifying the AI workbench.
 
 ## Health Checks
 
